@@ -1,0 +1,1612 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#fbf6ec">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="CBT Journal">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon.svg">
+  <title>CBTジャーナル</title>
+  <style>
+    :root {
+      --paper: #fbf6ec;
+      --panel: #fffaf1;
+      --panel-strong: #fff4e4;
+      --ink: #2f2a27;
+      --muted: #746b63;
+      --line: #ead9c8;
+      --accent: #9fb7bd;
+      --accent-dark: #8a4528;
+      --shadow: 0 18px 42px rgba(91, 58, 37, 0.12);
+      color-scheme: light;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 14% 4%, rgba(217, 91, 43, 0.08), transparent 26%),
+        linear-gradient(180deg, #fffbf4 0%, var(--paper) 100%);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "YuGothic", "Noto Sans JP", sans-serif;
+      line-height: 1.55;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    .app {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 18px;
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .eyebrow {
+      margin: 0 0 4px;
+      color: var(--accent-dark);
+      font-size: 0.86rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 0;
+      font-size: clamp(1.48rem, 4vw, 2.5rem);
+      line-height: 1.16;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin-bottom: 12px;
+      font-size: 1.2rem;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .today-pill {
+      flex: 0 0 auto;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 13px;
+      background: rgba(255, 250, 241, 0.78);
+      color: var(--muted);
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    .tab-nav {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      margin: 0 0 14px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 250, 241, 0.96);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 28px rgba(91, 58, 37, 0.08);
+    }
+
+    .tab-button {
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
+      padding: 10px 6px;
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+
+    .tab-button[aria-selected="true"] {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fffaf1;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 250, 241, 0.94);
+      box-shadow: var(--shadow);
+    }
+
+    .record-panel,
+    .preview-panel,
+    .calendar-panel,
+    .history-panel,
+    .settings-panel {
+      padding: 18px;
+    }
+
+    .record-head,
+    .history-head,
+    .settings-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .record-head p,
+    .settings-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .score-badge {
+      min-width: 76px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: #fffdf8;
+      color: var(--accent-dark);
+      text-align: center;
+      font-weight: 800;
+    }
+
+    .mood-palette {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .mood-chip {
+      display: grid;
+      justify-items: center;
+      gap: 4px;
+      min-height: 68px;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      background: #fffdf8;
+      color: var(--ink);
+      padding: 8px 6px;
+      text-align: center;
+      font-weight: 800;
+    }
+
+    .mood-chip[aria-pressed="true"] {
+      border-color: var(--ink);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.9) inset;
+    }
+
+    .mood-dot {
+      width: 28px;
+      height: 28px;
+      border: 1px solid rgba(47, 42, 39, 0.15);
+      border-radius: 999px;
+    }
+
+    .record-controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .slider-row,
+    .custom-row {
+      display: grid;
+      gap: 6px;
+    }
+
+    .custom-row {
+      grid-template-columns: auto 1fr;
+      align-items: center;
+    }
+
+    label,
+    .field-label {
+      color: var(--accent-dark);
+      font-size: 0.88rem;
+      font-weight: 800;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    input[type="color"] {
+      width: 46px;
+      height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffdf8;
+      padding: 4px;
+    }
+
+    input[type="date"],
+    input[type="time"],
+    input[type="text"],
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffdf8;
+      color: var(--ink);
+      outline: none;
+      padding: 10px 12px;
+    }
+
+    textarea {
+      min-height: 86px;
+      resize: vertical;
+    }
+
+    input:focus,
+    textarea:focus,
+    button:focus-visible,
+    summary:focus-visible {
+      border-color: var(--accent);
+      outline: 3px solid rgba(217, 91, 43, 0.18);
+      outline-offset: 1px;
+    }
+
+    .primary-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .extra-section {
+      margin-top: 12px;
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+    }
+
+    summary {
+      width: fit-content;
+      border-radius: 8px;
+      color: var(--accent-dark);
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .button {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 16px;
+      background: #fffdf8;
+      color: var(--ink);
+      font-weight: 800;
+    }
+
+    .button.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fffaf1;
+    }
+
+    .button.danger {
+      color: #9a342a;
+    }
+
+    .feedback,
+    .settings-feedback {
+      min-height: 1.25em;
+      margin: 8px 0 0;
+      color: var(--accent-dark);
+      font-size: 0.88rem;
+      font-weight: 800;
+    }
+
+    .notice {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .preview-meta {
+      display: grid;
+      gap: 4px;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .preview-meta strong {
+      color: var(--accent-dark);
+    }
+
+    .emotion-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      font-weight: 800;
+    }
+
+    .emotion-dot {
+      width: 18px;
+      height: 18px;
+      border: 1px solid rgba(47, 42, 39, 0.14);
+      border-radius: 999px;
+      background: var(--accent);
+    }
+
+    .bubble-map {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      align-items: center;
+    }
+
+    .bubble {
+      display: grid;
+      place-items: center;
+      min-height: 132px;
+      border: 4px solid var(--accent);
+      border-radius: 999px;
+      background: #fffefa;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .bubble.body {
+      grid-column: 1 / -1;
+      justify-self: center;
+      width: min(76%, 360px);
+      min-height: 122px;
+    }
+
+    .bubble h3 {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 1.25rem;
+    }
+
+    .bubble p {
+      margin: 0;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font-size: 0.94rem;
+    }
+
+    .chart-block {
+      margin-bottom: 14px;
+    }
+
+    .chart-wrap {
+      width: 100%;
+      height: 220px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffdf8;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .calendar-toolbar {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .calendar-toolbar p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .month-label {
+      font-size: 1.08rem;
+      font-weight: 800;
+    }
+
+    .month-actions,
+    .calendar-modes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .calendar-modes {
+      justify-content: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .small-button,
+    .mode-button {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff7eb;
+      color: var(--ink);
+      padding: 7px 10px;
+      font-size: 0.88rem;
+      font-weight: 800;
+    }
+
+    .mode-button[aria-pressed="true"] {
+      border-color: var(--ink);
+      background: var(--accent);
+      color: #fffaf1;
+    }
+
+    .week-row,
+    .month-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .week-row {
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .month-day {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 78px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffdf8;
+      color: var(--ink);
+      padding: 7px;
+      text-align: left;
+    }
+
+    .month-day.other-month {
+      opacity: 0.42;
+    }
+
+    .month-day.today {
+      border-color: var(--ink);
+    }
+
+    .month-day.has-entry {
+      border-width: 2px;
+      font-weight: 800;
+    }
+
+    .month-day-number {
+      line-height: 1;
+    }
+
+    .month-day-label {
+      color: var(--ink);
+      font-size: 0.72rem;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .calendar-note {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .summary-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .summary-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fffdf8;
+    }
+
+    .summary-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .summary-item strong {
+      display: block;
+      font-size: 1.04rem;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .entry-card {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffdf8;
+      padding: 12px;
+    }
+
+    .entry-dot {
+      width: 34px;
+      height: 34px;
+      border: 1px solid rgba(47, 42, 39, 0.15);
+      border-radius: 999px;
+    }
+
+    .entry-title {
+      margin: 0;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .entry-meta {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+      overflow-wrap: anywhere;
+    }
+
+    .entry-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .empty {
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      color: var(--muted);
+      background: rgba(255, 253, 248, 0.65);
+    }
+
+    .setting-card {
+      display: grid;
+      gap: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffdf8;
+      padding: 14px;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .toggle-row input {
+      width: 22px;
+      height: 22px;
+      accent-color: var(--accent);
+    }
+
+    .settings-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    @media (max-width: 920px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .app {
+        padding: 12px;
+        padding-bottom: calc(86px + env(safe-area-inset-bottom));
+      }
+
+      .topbar,
+      .record-head,
+      .calendar-toolbar,
+      .history-head,
+      .settings-head {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .tab-nav {
+        position: fixed;
+        left: 10px;
+        right: 10px;
+        bottom: calc(8px + env(safe-area-inset-bottom));
+        top: auto;
+        margin: 0;
+      }
+
+      .record-panel,
+      .preview-panel,
+      .calendar-panel,
+      .history-panel,
+      .settings-panel {
+        padding: 14px;
+      }
+
+      .mood-palette {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .record-controls,
+      .primary-row,
+      .detail-grid,
+      .summary-row {
+        grid-template-columns: 1fr;
+      }
+
+      .actions .button,
+      .button.primary {
+        width: 100%;
+      }
+
+      .bubble-map {
+        grid-template-columns: 1fr;
+      }
+
+      .bubble.body {
+        width: 100%;
+      }
+
+      .chart-wrap {
+        height: 190px;
+      }
+
+      .week-row,
+      .month-grid {
+        gap: 4px;
+      }
+
+      .month-day {
+        align-items: center;
+        min-height: 54px;
+        padding: 6px 3px;
+        text-align: center;
+      }
+
+      .month-day.has-entry .month-day-label {
+        width: 10px;
+        height: 10px;
+        margin-top: 4px;
+        border-radius: 999px;
+        background: var(--day-color);
+        color: transparent;
+        overflow: hidden;
+      }
+
+      .entry-card {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+
+      .entry-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+      }
+
+      .settings-actions .button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">CBT JOURNAL</p>
+        <h1>今日の気分を、まず残す</h1>
+      </div>
+      <div class="today-pill" id="todayLabel"></div>
+    </header>
+
+    <nav class="tab-nav" aria-label="画面切り替え">
+      <button class="tab-button" type="button" data-tab="record" aria-selected="true">記録</button>
+      <button class="tab-button" type="button" data-tab="review" aria-selected="false">ふりかえり</button>
+      <button class="tab-button" type="button" data-tab="history" aria-selected="false">一覧</button>
+      <button class="tab-button" type="button" data-tab="settings" aria-selected="false">設定</button>
+    </nav>
+
+    <section class="tab-panel" id="tab-record" data-tab-panel="record" aria-label="記録">
+      <section class="panel record-panel" aria-labelledby="recordTitle">
+        <div class="record-head">
+          <div>
+            <h2 id="recordTitle">今日の記録</h2>
+            <p>色だけでも保存できます。余裕がある日は下の欄も少しだけ。</p>
+          </div>
+          <span class="score-badge"><span id="intensityValue">45</span>/100</span>
+        </div>
+
+        <form id="journalForm">
+          <div class="mood-palette" id="moodPalette" aria-label="気分色を選ぶ"></div>
+
+          <div class="record-controls">
+            <div class="slider-row">
+              <label for="intensity">気分の強さ</label>
+              <input id="intensity" name="intensity" type="range" min="0" max="100" value="45">
+            </div>
+            <label class="custom-row" for="moodColor">
+              <input id="moodColor" name="moodColor" type="color" value="#9fb7bd" aria-label="気分色">
+              <span>自由な色</span>
+            </label>
+          </div>
+
+          <div class="primary-row">
+            <div class="field">
+              <label for="date">日付</label>
+              <input id="date" name="date" type="date" required>
+            </div>
+            <div class="field">
+              <label for="time">時間</label>
+              <input id="time" name="time" type="time">
+            </div>
+            <div class="field">
+              <label for="emotion">感情</label>
+              <input id="emotion" name="emotion" type="text" placeholder="ふつう、不安、うれしいなど">
+            </div>
+            <div class="field full">
+              <label for="situation">状況</label>
+              <textarea id="situation" name="situation" placeholder="何があった？ 何を思い出した？"></textarea>
+            </div>
+          </div>
+
+          <div class="detail-grid">
+            <div class="field">
+              <label for="body">からだ</label>
+              <textarea id="body" name="body" placeholder="そわそわ、眠い、肩こりなど"></textarea>
+            </div>
+            <div class="field">
+              <label for="thought">考え</label>
+              <textarea id="thought" name="thought" placeholder="頭に浮かんだ言葉"></textarea>
+            </div>
+            <div class="field">
+              <label for="action">行動</label>
+              <textarea id="action" name="action" placeholder="休んだ、相談した、避けたなど"></textarea>
+            </div>
+          </div>
+
+          <details class="extra-section">
+            <summary>もう少し整理する</summary>
+            <div class="detail-grid">
+              <div class="field">
+                <label for="evidence">そう思う根拠</label>
+                <textarea id="evidence" name="evidence" placeholder="事実として言えること"></textarea>
+              </div>
+              <div class="field">
+                <label for="alternative">別の見方</label>
+                <textarea id="alternative" name="alternative" placeholder="友だちに言うなら？"></textarea>
+              </div>
+              <div class="field">
+                <label for="nextAction">次の小さな行動</label>
+                <textarea id="nextAction" name="nextAction" placeholder="5分だけ、深呼吸、連絡するなど"></textarea>
+              </div>
+            </div>
+          </details>
+
+          <div class="actions">
+            <button class="button primary" type="submit" id="saveButton">記録する</button>
+            <button class="button" type="button" id="quickSaveButton">色だけ記録</button>
+            <button class="button" type="button" id="newButton">新しく書く</button>
+            <button class="button danger" type="button" id="clearAllButton">全記録を消す</button>
+          </div>
+          <p class="feedback" id="feedback" aria-live="polite"></p>
+          <p class="notice">保存先はこのブラウザの中です。医療や緊急対応の代わりではないので、つらさが強い日は身近な人や専門窓口にも頼ってください。</p>
+        </form>
+      </section>
+    </section>
+
+    <main class="dashboard tab-panel" id="tab-review" data-tab-panel="review" aria-label="ふりかえり" hidden>
+      <section class="panel preview-panel" aria-labelledby="previewTitle">
+        <h2 id="previewTitle">3点チェック</h2>
+        <div class="preview-meta">
+          <div><strong>状況</strong> <span id="previewDate"></span></div>
+          <div id="previewSituation">今日のできごとを書いてみましょう。</div>
+        </div>
+        <div class="emotion-line">
+          <span class="emotion-dot" id="previewDot"></span>
+          <span>感情：</span>
+          <span id="previewEmotion">ふつう</span>
+        </div>
+        <div class="bubble-map">
+          <div class="bubble body">
+            <div>
+              <h3>からだ</h3>
+              <p id="previewBody">体の反応</p>
+            </div>
+          </div>
+          <div class="bubble">
+            <div>
+              <h3>考え</h3>
+              <p id="previewThought">浮かんだ考え</p>
+            </div>
+          </div>
+          <div class="bubble">
+            <div>
+              <h3>行動</h3>
+              <p id="previewAction">実際にしたこと</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel calendar-panel" aria-labelledby="calendarTitle">
+        <div class="chart-block">
+          <h2>気分の波</h2>
+          <div class="chart-wrap">
+            <canvas id="moodChart" aria-label="気分の波グラフ"></canvas>
+          </div>
+        </div>
+
+        <div class="calendar-toolbar">
+          <div>
+            <h2 id="calendarTitle">項目別カレンダー</h2>
+            <div class="month-label" id="monthLabel"></div>
+            <p id="calendarModeHint">気分色を日ごとに見ます。</p>
+          </div>
+          <div class="month-actions">
+            <button class="small-button" type="button" id="prevMonthButton">前月</button>
+            <button class="small-button" type="button" id="todayMonthButton">今月</button>
+            <button class="small-button" type="button" id="nextMonthButton">翌月</button>
+          </div>
+        </div>
+        <div class="calendar-modes" id="calendarModes" aria-label="カレンダーで見る項目">
+          <button class="mode-button" type="button" data-mode="mood" aria-pressed="true">気分</button>
+          <button class="mode-button" type="button" data-mode="body" aria-pressed="false">からだ</button>
+          <button class="mode-button" type="button" data-mode="thought" aria-pressed="false">考え</button>
+          <button class="mode-button" type="button" data-mode="action" aria-pressed="false">行動</button>
+        </div>
+        <div class="week-row" aria-hidden="true">
+          <span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span>
+        </div>
+        <div class="month-grid" id="monthGrid" aria-label="月ごとの項目別カレンダー"></div>
+        <p class="calendar-note" id="monthSelection">記録がある日を押すと、その日の最新記録を開けます。</p>
+
+        <div class="summary-row">
+          <div class="summary-item">
+            <span>記録数</span>
+            <strong id="countSummary">0件</strong>
+          </div>
+          <div class="summary-item">
+            <span>平均の強さ</span>
+            <strong id="averageSummary">-</strong>
+          </div>
+          <div class="summary-item">
+            <span>最新の気分</span>
+            <strong id="latestSummary">-</strong>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <section class="panel history-panel tab-panel" id="tab-history" data-tab-panel="history" aria-labelledby="historyTitle" hidden>
+      <div class="history-head">
+        <h2 id="historyTitle">記録一覧</h2>
+        <div>
+          <button class="small-button" type="button" id="sampleButton">サンプル</button>
+          <button class="small-button" type="button" id="exportButton">書き出す</button>
+        </div>
+      </div>
+      <div class="history-list" id="historyList"></div>
+    </section>
+
+    <section class="panel settings-panel tab-panel" id="tab-settings" data-tab-panel="settings" aria-labelledby="settingsTitle" hidden>
+      <div class="settings-head">
+        <div>
+          <h2 id="settingsTitle">設定</h2>
+          <p>毎日使いやすくするための通知とアプリ設定です。</p>
+        </div>
+      </div>
+      <div class="setting-card">
+        <label class="toggle-row" for="reminderEnabled">
+          <span>
+            <strong>リマインド</strong><br>
+            <span class="notice">時間になったら「色だけでもどう？」と知らせます。</span>
+          </span>
+          <input id="reminderEnabled" type="checkbox">
+        </label>
+        <div class="field">
+          <label for="reminderTime">通知する時間</label>
+          <input id="reminderTime" type="time" value="21:00">
+        </div>
+        <div class="settings-actions">
+          <button class="button primary" type="button" id="enableNotificationButton">通知を許可</button>
+          <button class="button" type="button" id="testNotificationButton">テスト通知</button>
+        </div>
+        <p class="settings-feedback" id="settingsFeedback" aria-live="polite"></p>
+        <p class="notice">ブラウザ通知は、スマホでホーム画面に追加して開いたときに安定しやすいです。iPhoneでは通知の挙動が端末設定に左右されます。</p>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "cbt-journal-v4";
+    const LEGACY_STORAGE_KEYS = ["cbt-journal-v3", "cbt-journal-v1"];
+    const SETTINGS_KEY = "cbt-journal-settings-v1";
+    const moodPresets = [
+      { label: "おだやか", color: "#82a878", value: 25 },
+      { label: "うれしい", color: "#f0c95a", value: 35 },
+      { label: "ふつう", color: "#9fb7bd", value: 45 },
+      { label: "不安", color: "#d95b2b", value: 70 },
+      { label: "かなしい", color: "#6f8fb8", value: 75 },
+      { label: "いらいら", color: "#c94b4b", value: 80 }
+    ];
+    const praiseMessages = [
+      "記録できた、それだけで十分えらいです。",
+      "今日の自分を置き去りにしなかったね。いい記録です。",
+      "色だけでも残せたの、ちゃんと前進です。",
+      "いまの気分に気づけたのが大事。よくできました。",
+      "短くても記録は記録。続ける力になっています。"
+    ];
+    const modeLabels = { mood: "気分", body: "からだ", thought: "考え", action: "行動" };
+    const modeHints = {
+      mood: "気分色を日ごとに見ます。",
+      body: "からだの反応を書いた日だけ色がつきます。",
+      thought: "考えを書いた日だけ色がつきます。",
+      action: "行動を書いた日だけ色がつきます。"
+    };
+    const sampleEntries = [
+      { dateOffset: -5, time: "20:40", emotion: "不安", color: "#d95b2b", intensity: 72, situation: "明日の予定を考えて落ち着かなかった", body: "胸が重い\n肩に力", thought: "間に合わないかも", action: "予定表を見直した" },
+      { dateOffset: -3, time: "22:10", emotion: "安心", color: "#82a878", intensity: 34, situation: "予定をひとつ終えた", body: "呼吸が楽", thought: "思ったよりできた", action: "早めに寝る準備" },
+      { dateOffset: -1, time: "21:00", emotion: "うれしい", color: "#f0c95a", intensity: 42, situation: "音楽を聴きながら片づけた", body: "体が軽い", thought: "少し整った", action: "机の上を片づけた" }
+    ];
+
+    const fields = {
+      date: document.querySelector("#date"),
+      time: document.querySelector("#time"),
+      emotion: document.querySelector("#emotion"),
+      moodColor: document.querySelector("#moodColor"),
+      intensity: document.querySelector("#intensity"),
+      situation: document.querySelector("#situation"),
+      body: document.querySelector("#body"),
+      thought: document.querySelector("#thought"),
+      action: document.querySelector("#action"),
+      evidence: document.querySelector("#evidence"),
+      alternative: document.querySelector("#alternative"),
+      nextAction: document.querySelector("#nextAction")
+    };
+    const preview = {
+      date: document.querySelector("#previewDate"),
+      situation: document.querySelector("#previewSituation"),
+      emotion: document.querySelector("#previewEmotion"),
+      dot: document.querySelector("#previewDot"),
+      body: document.querySelector("#previewBody"),
+      thought: document.querySelector("#previewThought"),
+      action: document.querySelector("#previewAction")
+    };
+    const form = document.querySelector("#journalForm");
+    const moodPalette = document.querySelector("#moodPalette");
+    const intensityValue = document.querySelector("#intensityValue");
+    const feedback = document.querySelector("#feedback");
+    const saveButton = document.querySelector("#saveButton");
+    const quickSaveButton = document.querySelector("#quickSaveButton");
+    const newButton = document.querySelector("#newButton");
+    const clearAllButton = document.querySelector("#clearAllButton");
+    const todayLabel = document.querySelector("#todayLabel");
+    const chart = document.querySelector("#moodChart");
+    const monthLabel = document.querySelector("#monthLabel");
+    const monthGrid = document.querySelector("#monthGrid");
+    const calendarModes = document.querySelector("#calendarModes");
+    const calendarModeHint = document.querySelector("#calendarModeHint");
+    const monthSelection = document.querySelector("#monthSelection");
+    const prevMonthButton = document.querySelector("#prevMonthButton");
+    const todayMonthButton = document.querySelector("#todayMonthButton");
+    const nextMonthButton = document.querySelector("#nextMonthButton");
+    const countSummary = document.querySelector("#countSummary");
+    const averageSummary = document.querySelector("#averageSummary");
+    const latestSummary = document.querySelector("#latestSummary");
+    const historyList = document.querySelector("#historyList");
+    const sampleButton = document.querySelector("#sampleButton");
+    const exportButton = document.querySelector("#exportButton");
+    const tabButtons = document.querySelectorAll(".tab-button");
+    const tabPanels = document.querySelectorAll("[data-tab-panel]");
+    const reminderEnabled = document.querySelector("#reminderEnabled");
+    const reminderTime = document.querySelector("#reminderTime");
+    const enableNotificationButton = document.querySelector("#enableNotificationButton");
+    const testNotificationButton = document.querySelector("#testNotificationButton");
+    const settingsFeedback = document.querySelector("#settingsFeedback");
+
+    let entries = readEntries();
+    let settings = readSettings();
+    let editingId = null;
+    let clearArmed = false;
+    let clearTimer = null;
+    let calendarMode = "mood";
+    let visibleMonth = new Date();
+    visibleMonth.setDate(1);
+
+    function pad(value) { return String(value).padStart(2, "0"); }
+    function localDateString(date = new Date()) { return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`; }
+    function localTimeString(date = new Date()) { return `${pad(date.getHours())}:${pad(date.getMinutes())}`; }
+    function setVisibleMonth(dateString) {
+      const date = new Date(`${dateString}T00:00:00`);
+      visibleMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    }
+    function formatDate(dateString) {
+      if (!dateString) return "";
+      const date = new Date(`${dateString}T00:00:00`);
+      return date.toLocaleDateString("ja-JP", { month: "long", day: "numeric", weekday: "short" });
+    }
+    function firstLine(value) { return String(value || "").trim().split(/\n/)[0] || ""; }
+    function escapeText(value, fallback) { return String(value || "").trim() || fallback; }
+    function randomPraise() { return praiseMessages[Math.floor(Math.random() * praiseMessages.length)]; }
+    function hexToRgba(hex, alpha) {
+      const clean = String(hex || "").replace("#", "");
+      if (clean.length !== 6) return `rgba(159, 183, 189, ${alpha})`;
+      const number = Number.parseInt(clean, 16);
+      return `rgba(${(number >> 16) & 255}, ${(number >> 8) & 255}, ${number & 255}, ${alpha})`;
+    }
+
+    function readEntries() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+        for (const key of LEGACY_STORAGE_KEYS) {
+          const legacy = localStorage.getItem(key);
+          if (legacy) {
+            const migrated = JSON.parse(legacy);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+            return migrated;
+          }
+        }
+        return [];
+      } catch {
+        return [];
+      }
+    }
+    function writeEntries() { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); }
+    function readSettings() {
+      try {
+        return { enabled: false, time: "21:00", lastReminderDate: "", ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}") };
+      } catch {
+        return { enabled: false, time: "21:00", lastReminderDate: "" };
+      }
+    }
+    function writeSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+
+    function sortEntries(list, direction = "desc") {
+      const sorted = [...list].sort((a, b) => `${a.date || ""}T${a.time || "00:00"}`.localeCompare(`${b.date || ""}T${b.time || "00:00"}`));
+      return direction === "desc" ? sorted.reverse() : sorted;
+    }
+
+    function buildMoodPalette() {
+      moodPresets.forEach((mood) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "mood-chip";
+        button.dataset.color = mood.color;
+        button.dataset.label = mood.label;
+        button.dataset.value = mood.value;
+        const dot = document.createElement("span");
+        dot.className = "mood-dot";
+        dot.style.background = mood.color;
+        const label = document.createElement("span");
+        label.textContent = mood.label;
+        button.append(dot, label);
+        moodPalette.appendChild(button);
+      });
+    }
+    function chooseMood(button) {
+      fields.moodColor.value = button.dataset.color;
+      fields.emotion.value = button.dataset.label;
+      fields.intensity.value = button.dataset.value;
+      feedback.textContent = "";
+      updatePreview();
+    }
+    function updateMoodButtons() {
+      const color = fields.moodColor.value.toLowerCase();
+      moodPalette.querySelectorAll(".mood-chip").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.color.toLowerCase() === color)));
+      intensityValue.textContent = fields.intensity.value;
+    }
+    function updatePreview() {
+      const color = fields.moodColor.value;
+      document.documentElement.style.setProperty("--accent", color);
+      preview.date.textContent = formatDate(fields.date.value);
+      preview.situation.textContent = escapeText(fields.situation.value, "今日のできごとを書いてみましょう。");
+      preview.emotion.textContent = escapeText(fields.emotion.value, "ふつう");
+      preview.dot.style.background = color;
+      preview.body.textContent = escapeText(fields.body.value, "体の反応");
+      preview.thought.textContent = escapeText(fields.thought.value, "浮かんだ考え");
+      preview.action.textContent = escapeText(fields.action.value, "実際にしたこと");
+      updateMoodButtons();
+    }
+    function switchTab(tabName) {
+      tabButtons.forEach((button) => button.setAttribute("aria-selected", String(button.dataset.tab === tabName)));
+      tabPanels.forEach((panel) => { panel.hidden = panel.dataset.tabPanel !== tabName; });
+      if (tabName === "review") window.requestAnimationFrame(() => { renderChart(); renderMonthCalendar(); });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function collectEntry(quickOnly = false) {
+      const existing = editingId ? entries.find((entry) => entry.id === editingId) : null;
+      return {
+        id: editingId || crypto.randomUUID(),
+        createdAt: existing?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        date: fields.date.value,
+        time: fields.time.value,
+        emotion: fields.emotion.value.trim() || "色だけ",
+        color: fields.moodColor.value,
+        intensity: Number(fields.intensity.value) || 45,
+        situation: quickOnly ? "" : fields.situation.value.trim(),
+        body: quickOnly ? "" : fields.body.value.trim(),
+        thought: quickOnly ? "" : fields.thought.value.trim(),
+        action: quickOnly ? "" : fields.action.value.trim(),
+        evidence: quickOnly ? "" : fields.evidence.value.trim(),
+        alternative: quickOnly ? "" : fields.alternative.value.trim(),
+        nextAction: quickOnly ? "" : fields.nextAction.value.trim(),
+        quickOnly
+      };
+    }
+    function saveEntry(event) {
+      event.preventDefault();
+      saveCollectedEntry(false);
+    }
+    function saveQuickEntry() { saveCollectedEntry(true); }
+    function saveCollectedEntry(quickOnly) {
+      const entry = collectEntry(quickOnly);
+      if (!entry.date) return;
+      if (editingId && !quickOnly) {
+        entries = entries.map((item) => item.id === editingId ? entry : item);
+      } else {
+        entry.id = crypto.randomUUID();
+        entry.createdAt = new Date().toISOString();
+        entries.push(entry);
+      }
+      writeEntries();
+      editingId = quickOnly ? null : entry.id;
+      saveButton.textContent = editingId ? "上書きする" : "記録する";
+      setVisibleMonth(entry.date);
+      feedback.textContent = `${formatDate(entry.date)} ${entry.time || ""} に「${entry.emotion}」を記録しました。${randomPraise()}`;
+      renderAll();
+    }
+    function resetForm() {
+      editingId = null;
+      form.reset();
+      fields.date.value = localDateString();
+      fields.time.value = localTimeString();
+      fields.emotion.value = "ふつう";
+      fields.moodColor.value = "#9fb7bd";
+      fields.intensity.value = "45";
+      saveButton.textContent = "記録する";
+      monthSelection.textContent = "記録がある日を押すと、その日の最新記録を開けます。";
+      updatePreview();
+    }
+    function fillForm(entry) {
+      editingId = entry.id;
+      Object.entries(fields).forEach(([key, element]) => {
+        if (key === "moodColor") element.value = entry.color || "#9fb7bd";
+        else element.value = entry[key] ?? "";
+      });
+      saveButton.textContent = "上書きする";
+      setVisibleMonth(entry.date || localDateString());
+      feedback.textContent = `${formatDate(entry.date)}の記録を開いています。`;
+      updatePreview();
+      renderMonthCalendar();
+      switchTab("record");
+    }
+
+    function getDailySummaries() {
+      const map = new Map();
+      sortEntries(entries, "asc").forEach((entry) => {
+        if (!entry.date) return;
+        if (!map.has(entry.date)) map.set(entry.date, { date: entry.date, total: 0, count: 0, latest: entry });
+        const item = map.get(entry.date);
+        item.total += Number(entry.intensity) || 0;
+        item.count += 1;
+        item.latest = entry;
+      });
+      return Array.from(map.values()).map((item) => ({ date: item.date, intensity: Math.round(item.total / item.count), color: item.latest.color, emotion: item.latest.emotion }));
+    }
+    function renderChart() {
+      const context = chart.getContext("2d");
+      const rect = chart.getBoundingClientRect();
+      if (rect.width < 1 || rect.height < 1) return;
+      const ratio = window.devicePixelRatio || 1;
+      chart.width = Math.max(1, Math.floor(rect.width * ratio));
+      chart.height = Math.max(1, Math.floor(rect.height * ratio));
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      const width = rect.width;
+      const height = rect.height;
+      const padX = 42;
+      const padY = 25;
+      context.clearRect(0, 0, width, height);
+      context.fillStyle = "#fffdf8";
+      context.fillRect(0, 0, width, height);
+      context.strokeStyle = "#ead9c8";
+      context.fillStyle = "#746b63";
+      context.font = "12px -apple-system, BlinkMacSystemFont, sans-serif";
+      for (let i = 0; i <= 4; i += 1) {
+        const y = padY + ((height - padY * 2) / 4) * i;
+        context.beginPath();
+        context.moveTo(padX, y);
+        context.lineTo(width - 16, y);
+        context.stroke();
+      }
+      context.fillText("強い", 8, padY + 4);
+      context.fillText("穏やか", 4, height - padY + 4);
+      const points = getDailySummaries().slice(-14).map((item, index, list) => {
+        const plotWidth = width - padX - 22;
+        const plotHeight = height - padY * 2;
+        return { ...item, x: padX + (list.length === 1 ? plotWidth / 2 : (plotWidth / (list.length - 1)) * index), y: padY + plotHeight - (item.intensity / 100) * plotHeight };
+      });
+      if (points.length === 0) {
+        context.font = "14px -apple-system, BlinkMacSystemFont, sans-serif";
+        context.fillText("記録すると気分の波が出ます。", padX, height / 2);
+        return;
+      }
+      context.beginPath();
+      points.forEach((point, index) => index === 0 ? context.moveTo(point.x, point.y) : context.lineTo(point.x, point.y));
+      context.strokeStyle = "#2f2a27";
+      context.lineWidth = 2.5;
+      context.stroke();
+      points.forEach((point) => {
+        context.beginPath();
+        context.arc(point.x, point.y, 7, 0, Math.PI * 2);
+        context.fillStyle = point.color || "#9fb7bd";
+        context.fill();
+        context.strokeStyle = "#fffdf8";
+        context.lineWidth = 3;
+        context.stroke();
+      });
+    }
+    function itemForMode(entry) {
+      if (!entry) return "";
+      if (calendarMode === "mood") return entry.emotion || "気分";
+      return firstLine(entry[calendarMode]);
+    }
+    function entryMatchesMode(entry) {
+      if (!entry) return false;
+      if (calendarMode === "mood") return true;
+      return Boolean(firstLine(entry[calendarMode]));
+    }
+    function renderMonthCalendar() {
+      monthGrid.innerHTML = "";
+      monthLabel.textContent = visibleMonth.toLocaleDateString("ja-JP", { year: "numeric", month: "long" });
+      calendarModeHint.textContent = modeHints[calendarMode];
+      calendarModes.querySelectorAll(".mode-button").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.mode === calendarMode)));
+      const year = visibleMonth.getFullYear();
+      const month = visibleMonth.getMonth();
+      const startDay = new Date(year, month, 1);
+      startDay.setDate(startDay.getDate() - startDay.getDay());
+      const todayKey = localDateString();
+      const entriesByDate = new Map();
+      sortEntries(entries, "asc").forEach((entry) => {
+        if (!entry.date) return;
+        if (!entriesByDate.has(entry.date)) entriesByDate.set(entry.date, []);
+        entriesByDate.get(entry.date).push(entry);
+      });
+      for (let index = 0; index < 42; index += 1) {
+        const date = new Date(startDay);
+        date.setDate(startDay.getDate() + index);
+        const key = localDateString(date);
+        const allDayEntries = entriesByDate.get(key) || [];
+        const matching = sortEntries(allDayEntries.filter(entryMatchesMode), "desc");
+        const latest = matching[0];
+        const labelText = itemForMode(latest);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "month-day";
+        button.dataset.date = key;
+        button.setAttribute("aria-label", latest ? `${formatDate(key)} ${modeLabels[calendarMode]} ${labelText}` : `${formatDate(key)} ${modeLabels[calendarMode]}の記録なし`);
+        if (date.getMonth() !== month) button.classList.add("other-month");
+        if (key === todayKey) button.classList.add("today");
+        if (latest) {
+          const color = latest.color || "#9fb7bd";
+          button.classList.add("has-entry");
+          button.style.setProperty("--day-color", color);
+          button.style.borderColor = color;
+          button.style.background = `linear-gradient(180deg, ${hexToRgba(color, 0.42)} 0%, #fffdf8 100%)`;
+        }
+        const number = document.createElement("span");
+        number.className = "month-day-number";
+        number.textContent = String(date.getDate());
+        const label = document.createElement("span");
+        label.className = "month-day-label";
+        label.textContent = labelText ? (matching.length > 1 ? `${labelText} ${matching.length}` : labelText) : "";
+        button.append(number, label);
+        monthGrid.appendChild(button);
+      }
+    }
+    function renderSummary() {
+      countSummary.textContent = `${entries.length}件`;
+      if (entries.length === 0) {
+        averageSummary.textContent = "-";
+        latestSummary.textContent = "-";
+        return;
+      }
+      const average = Math.round(entries.reduce((sum, entry) => sum + (Number(entry.intensity) || 0), 0) / entries.length);
+      const latest = sortEntries(entries, "desc")[0];
+      averageSummary.textContent = `${average}/100`;
+      latestSummary.textContent = latest.emotion || "未入力";
+    }
+    function renderHistory() {
+      historyList.innerHTML = "";
+      if (entries.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = "まだ記録がありません。まずは記録タブで色だけ残してみましょう。";
+        historyList.appendChild(empty);
+        return;
+      }
+      sortEntries(entries, "desc").forEach((entry) => {
+        const item = document.createElement("article");
+        item.className = "entry-card";
+        const dot = document.createElement("span");
+        dot.className = "entry-dot";
+        dot.style.background = entry.color || "#9fb7bd";
+        const text = document.createElement("div");
+        const title = document.createElement("p");
+        title.className = "entry-title";
+        title.textContent = `${formatDate(entry.date)} ${entry.emotion || "気分"}`;
+        const meta = document.createElement("p");
+        meta.className = "entry-meta";
+        meta.textContent = `${entry.intensity ?? 0}/100 / ${entry.quickOnly ? "色だけ記録" : entry.situation || "状況なし"}`;
+        text.append(title, meta);
+        const actions = document.createElement("div");
+        actions.className = "entry-actions";
+        const open = document.createElement("button");
+        open.className = "small-button";
+        open.type = "button";
+        open.dataset.load = entry.id;
+        open.textContent = "開く";
+        const remove = document.createElement("button");
+        remove.className = "small-button";
+        remove.type = "button";
+        remove.dataset.delete = entry.id;
+        remove.textContent = "削除";
+        actions.append(open, remove);
+        item.append(dot, text, actions);
+        historyList.appendChild(item);
+      });
+    }
+    function renderAll() {
+      renderChart();
+      renderMonthCalendar();
+      renderSummary();
+      renderHistory();
+      updatePreview();
+      renderSettings();
+    }
+    function addSampleEntries() {
+      const today = new Date(`${localDateString()}T00:00:00`);
+      const samples = sampleEntries.map((sample) => {
+        const date = new Date(today);
+        date.setDate(today.getDate() + sample.dateOffset);
+        return { id: crypto.randomUUID(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), date: localDateString(date), time: sample.time, emotion: sample.emotion, color: sample.color, intensity: sample.intensity, situation: sample.situation, body: sample.body, thought: sample.thought, action: sample.action, evidence: "", alternative: "", nextAction: "", quickOnly: false };
+      });
+      entries = [...entries, ...samples];
+      writeEntries();
+      setVisibleMonth(localDateString());
+      renderAll();
+    }
+    function downloadJson() {
+      const blob = new Blob([JSON.stringify(entries, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `cbt-journal-${localDateString()}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function didRecordToday() { return entries.some((entry) => entry.date === localDateString()); }
+    function renderSettings() {
+      reminderEnabled.checked = Boolean(settings.enabled);
+      reminderTime.value = settings.time || "21:00";
+    }
+    async function showReminderNotification(test = false) {
+      const title = test ? "テスト通知" : "今日の気分、色だけでも残す？";
+      const body = test ? "通知はこんな感じで届きます。" : "1タップで今日の色だけ記録できます。";
+      if (!("Notification" in window)) {
+        settingsFeedback.textContent = "このブラウザは通知に対応していないようです。";
+        return;
+      }
+      if (Notification.permission !== "granted") {
+        settingsFeedback.textContent = "先に「通知を許可」を押してください。";
+        return;
+      }
+      if ("serviceWorker" in navigator && location.protocol !== "file:") {
+        const registration = await navigator.serviceWorker.ready;
+        registration.showNotification(title, { body, icon: "./icon.svg", badge: "./icon.svg" });
+      } else {
+        new Notification(title, { body, icon: "./icon.svg" });
+      }
+    }
+    async function requestNotificationPermission() {
+      if (!("Notification" in window)) {
+        settingsFeedback.textContent = "このブラウザは通知に対応していないようです。";
+        return;
+      }
+      const result = await Notification.requestPermission();
+      settingsFeedback.textContent = result === "granted" ? "通知を許可しました。" : "通知はまだ許可されていません。";
+    }
+    function saveReminderSettings() {
+      settings.enabled = reminderEnabled.checked;
+      settings.time = reminderTime.value || "21:00";
+      writeSettings();
+      settingsFeedback.textContent = settings.enabled ? `${settings.time} にリマインドします。` : "リマインドをオフにしました。";
+    }
+    function checkReminder() {
+      if (!settings.enabled || !settings.time) return;
+      const now = new Date();
+      const today = localDateString(now);
+      const currentTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      if (currentTime !== settings.time || settings.lastReminderDate === today || didRecordToday()) return;
+      settings.lastReminderDate = today;
+      writeSettings();
+      showReminderNotification(false);
+    }
+
+    moodPalette.addEventListener("click", (event) => {
+      const button = event.target.closest(".mood-chip");
+      if (button) chooseMood(button);
+    });
+    tabButtons.forEach((button) => button.addEventListener("click", () => switchTab(button.dataset.tab)));
+    Object.values(fields).forEach((field) => {
+      field.addEventListener("input", updatePreview);
+      field.addEventListener("change", updatePreview);
+    });
+    form.addEventListener("submit", saveEntry);
+    quickSaveButton.addEventListener("click", saveQuickEntry);
+    newButton.addEventListener("click", resetForm);
+    clearAllButton.addEventListener("click", () => {
+      if (!entries.length) return;
+      if (!clearArmed) {
+        clearArmed = true;
+        clearAllButton.textContent = "もう一度押すと消す";
+        window.clearTimeout(clearTimer);
+        clearTimer = window.setTimeout(() => {
+          clearArmed = false;
+          clearAllButton.textContent = "全記録を消す";
+        }, 3500);
+        return;
+      }
+      entries = [];
+      writeEntries();
+      clearArmed = false;
+      clearAllButton.textContent = "全記録を消す";
+      feedback.textContent = "記録をすべて消しました。";
+      resetForm();
+      renderAll();
+    });
+    prevMonthButton.addEventListener("click", () => { visibleMonth.setMonth(visibleMonth.getMonth() - 1); renderMonthCalendar(); });
+    todayMonthButton.addEventListener("click", () => { setVisibleMonth(localDateString()); renderMonthCalendar(); });
+    nextMonthButton.addEventListener("click", () => { visibleMonth.setMonth(visibleMonth.getMonth() + 1); renderMonthCalendar(); });
+    calendarModes.addEventListener("click", (event) => {
+      const button = event.target.closest(".mode-button");
+      if (!button) return;
+      calendarMode = button.dataset.mode;
+      renderMonthCalendar();
+    });
+    monthGrid.addEventListener("click", (event) => {
+      const button = event.target.closest(".month-day");
+      if (!button) return;
+      const date = button.dataset.date;
+      const dayEntries = sortEntries(entries.filter((entry) => entry.date === date), "desc");
+      setVisibleMonth(date);
+      if (dayEntries.length > 0) {
+        fillForm(dayEntries[0]);
+        monthSelection.textContent = `${formatDate(date)}の最新記録を開きました。`;
+        return;
+      }
+      resetForm();
+      fields.date.value = date;
+      updatePreview();
+      renderMonthCalendar();
+      monthSelection.textContent = `${formatDate(date)}の新しい記録を書けます。`;
+      switchTab("record");
+    });
+    historyList.addEventListener("click", (event) => {
+      const loadButton = event.target.closest("[data-load]");
+      const deleteButton = event.target.closest("[data-delete]");
+      if (loadButton) {
+        const entry = entries.find((item) => item.id === loadButton.dataset.load);
+        if (entry) fillForm(entry);
+      }
+      if (deleteButton) {
+        entries = entries.filter((item) => item.id !== deleteButton.dataset.delete);
+        if (editingId === deleteButton.dataset.delete) resetForm();
+        writeEntries();
+        renderAll();
+      }
+    });
+    sampleButton.addEventListener("click", addSampleEntries);
+    exportButton.addEventListener("click", downloadJson);
+    reminderEnabled.addEventListener("change", saveReminderSettings);
+    reminderTime.addEventListener("change", saveReminderSettings);
+    enableNotificationButton.addEventListener("click", requestNotificationPermission);
+    testNotificationButton.addEventListener("click", () => showReminderNotification(true));
+    window.addEventListener("resize", renderChart);
+
+    todayLabel.textContent = new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric", weekday: "long" });
+    buildMoodPalette();
+    resetForm();
+    renderAll();
+    window.setInterval(checkReminder, 30000);
+
+    if ("serviceWorker" in navigator && location.protocol !== "file:") {
+      navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+    }
+  </script>
+</body>
+</html>

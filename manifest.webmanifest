@@ -1,0 +1,19 @@
+{
+  "name": "CBTジャーナル",
+  "short_name": "CBT Journal",
+  "description": "気分色だけでも残せる認知行動療法ジャーナル",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fbf6ec",
+  "theme_color": "#fbf6ec",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
