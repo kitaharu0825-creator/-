@@ -42,7 +42,8 @@
 
     button,
     input,
-    textarea {
+    textarea,
+    select {
       font: inherit;
     }
 
@@ -300,6 +301,8 @@
     input[type="date"],
     input[type="time"],
     input[type="text"],
+    input[type="search"],
+    select,
     textarea {
       width: 100%;
       min-width: 0;
@@ -377,6 +380,7 @@
     }
 
     input:focus,
+    select:focus,
     textarea:focus,
     button:focus-visible,
     summary:focus-visible {
@@ -734,6 +738,31 @@
       margin-top: 12px;
     }
 
+    .history-filters {
+      display: grid;
+      grid-template-columns: minmax(180px, 2fr) repeat(3, minmax(130px, 1fr));
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 253, 248, 0.72);
+      padding: 12px;
+    }
+
+    .history-filter-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .history-result {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-weight: 800;
+    }
+
     .entry-card {
       display: grid;
       grid-template-columns: auto minmax(0, 1fr) auto;
@@ -863,6 +892,7 @@
       .record-controls,
       .primary-row,
       .detail-grid,
+      .history-filters,
       .summary-row {
         grid-template-columns: 1fr;
       }
@@ -918,6 +948,15 @@
       .entry-actions {
         grid-column: 1 / -1;
         justify-content: flex-end;
+      }
+
+      .history-filter-footer {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .history-filter-footer .small-button {
+        width: 100%;
       }
 
       .settings-actions .button {
@@ -1147,6 +1186,30 @@
           <button class="small-button" type="button" id="exportButton">書き出す</button>
         </div>
       </div>
+      <div class="history-filters" aria-label="記録を絞り込む">
+        <div class="field">
+          <label for="historySearch">キーワード</label>
+          <input id="historySearch" type="search" placeholder="状況、考え、行動など">
+        </div>
+        <div class="field">
+          <label for="historyMood">気分</label>
+          <select id="historyMood">
+            <option value="">すべて</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="historyDateFrom">開始日</label>
+          <input id="historyDateFrom" type="date">
+        </div>
+        <div class="field">
+          <label for="historyDateTo">終了日</label>
+          <input id="historyDateTo" type="date">
+        </div>
+      </div>
+      <div class="history-filter-footer">
+        <p class="history-result" id="historyResult" aria-live="polite">0件</p>
+        <button class="small-button" type="button" id="clearHistoryFilters">絞り込みを解除</button>
+      </div>
       <div class="history-list" id="historyList"></div>
     </section>
 
@@ -1269,6 +1332,12 @@
     const averageSummary = document.querySelector("#averageSummary");
     const latestSummary = document.querySelector("#latestSummary");
     const historyList = document.querySelector("#historyList");
+    const historySearch = document.querySelector("#historySearch");
+    const historyMood = document.querySelector("#historyMood");
+    const historyDateFrom = document.querySelector("#historyDateFrom");
+    const historyDateTo = document.querySelector("#historyDateTo");
+    const historyResult = document.querySelector("#historyResult");
+    const clearHistoryFilters = document.querySelector("#clearHistoryFilters");
     const sampleButton = document.querySelector("#sampleButton");
     const exportButton = document.querySelector("#exportButton");
     const tabButtons = document.querySelectorAll(".tab-button");
@@ -1658,14 +1727,60 @@
     }
     function renderHistory() {
       historyList.innerHTML = "";
+      const selectedMood = historyMood.value;
+      const moods = [...new Set(entries.map((entry) => String(entry.emotion || "").trim()).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b, "ja"));
+      historyMood.innerHTML = "";
+      const allMoods = document.createElement("option");
+      allMoods.value = "";
+      allMoods.textContent = "すべて";
+      historyMood.appendChild(allMoods);
+      moods.forEach((mood) => {
+        const option = document.createElement("option");
+        option.value = mood;
+        option.textContent = mood;
+        historyMood.appendChild(option);
+      });
+      historyMood.value = moods.includes(selectedMood) ? selectedMood : "";
       if (entries.length === 0) {
+        historyResult.textContent = "0件";
         const empty = document.createElement("div");
         empty.className = "empty";
         empty.textContent = "まだ記録がありません。まずは記録タブで色だけ残してみましょう。";
         historyList.appendChild(empty);
         return;
       }
-      sortEntries(entries, "desc").forEach((entry) => {
+      const query = historySearch.value.trim().toLocaleLowerCase("ja-JP");
+      const mood = historyMood.value;
+      const dateFrom = historyDateFrom.value;
+      const dateTo = historyDateTo.value;
+      const filteredEntries = sortEntries(entries, "desc").filter((entry) => {
+        if (mood && entry.emotion !== mood) return false;
+        if (dateFrom && entry.date < dateFrom) return false;
+        if (dateTo && entry.date > dateTo) return false;
+        if (!query) return true;
+        const searchable = [
+          entry.emotion,
+          entry.timeContext,
+          entry.situation,
+          entry.body,
+          entry.thought,
+          entry.action,
+          entry.evidence,
+          entry.alternative,
+          entry.nextAction
+        ].join("\n").toLocaleLowerCase("ja-JP");
+        return searchable.includes(query);
+      });
+      historyResult.textContent = `${filteredEntries.length} / ${entries.length}件`;
+      if (filteredEntries.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = "条件に合う記録がありません。絞り込みを変えてみてください。";
+        historyList.appendChild(empty);
+        return;
+      }
+      filteredEntries.forEach((entry) => {
         const item = document.createElement("article");
         item.className = "entry-card";
         const dot = document.createElement("span");
@@ -1928,6 +2043,18 @@
         renderAll();
       }
     });
+    historySearch.addEventListener("input", renderHistory);
+    historyMood.addEventListener("change", renderHistory);
+    historyDateFrom.addEventListener("change", renderHistory);
+    historyDateTo.addEventListener("change", renderHistory);
+    clearHistoryFilters.addEventListener("click", () => {
+      historySearch.value = "";
+      historyMood.value = "";
+      historyDateFrom.value = "";
+      historyDateTo.value = "";
+      renderHistory();
+      historySearch.focus();
+    });
     sampleButton.addEventListener("click", addSampleEntries);
     exportButton.addEventListener("click", downloadJson);
     settingsExportButton.addEventListener("click", downloadJson);
@@ -1938,7 +2065,12 @@
     calendarReminderButton.addEventListener("click", downloadCalendarReminder);
     window.addEventListener("resize", renderChart);
 
-    todayLabel.textContent = new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric", weekday: "long" });
+    const today = new Date();
+    todayLabel.textContent = today.toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric", weekday: "long" });
+    todayWaveDayButton.textContent = `${today.getMonth() + 1}/${today.getDate()}`;
+    todayWaveDayButton.setAttribute("aria-label", `今日 ${formatWaveDay(localDateString(today))}`);
+    todayMonthButton.textContent = `${today.getMonth() + 1}月`;
+    todayMonthButton.setAttribute("aria-label", `今月 ${today.toLocaleDateString("ja-JP", { year: "numeric", month: "long" })}`);
     buildMoodPalette();
     resetForm();
     renderAll();
