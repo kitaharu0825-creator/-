@@ -1,5 +1,11 @@
-const CACHE_NAME = "cbt-journal-v6";
-const APP_FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
+const CACHE_NAME = "cbt-journal-v9";
+const APP_FILES = [
+  "./",
+  "./index.html",
+  "./manifest.webmanifest",
+  "./icon.svg",
+  "./icon-v2.svg"
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_FILES)));

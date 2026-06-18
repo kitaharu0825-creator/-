@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="CBT Journal">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="icon" href="./icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="./icon.svg">
+  <link rel="manifest" href="./manifest.webmanifest?v=2">
+  <link rel="icon" href="./icon-v2.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon-v2.svg">
   <title>CBTジャーナル</title>
   <style>
     :root {
@@ -246,8 +246,46 @@
     }
 
     input[type="range"] {
+      appearance: none;
+      -webkit-appearance: none;
       width: 100%;
-      accent-color: var(--accent);
+      height: 44px;
+      margin: 0;
+      background: transparent;
+      cursor: pointer;
+      touch-action: pan-y;
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 8px;
+      border-radius: 999px;
+      background: var(--line);
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 34px;
+      height: 34px;
+      margin-top: -13px;
+      border: 3px solid #fffdf8;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 2px 7px rgba(47, 42, 39, 0.26);
+    }
+
+    input[type="range"]::-moz-range-track {
+      height: 8px;
+      border-radius: 999px;
+      background: var(--line);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 30px;
+      height: 30px;
+      border: 3px solid #fffdf8;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 2px 7px rgba(47, 42, 39, 0.26);
     }
 
     input[type="color"] {
@@ -264,12 +302,30 @@
     input[type="text"],
     textarea {
       width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      inline-size: 100%;
+      min-inline-size: 0;
+      max-inline-size: 100%;
       border: 1px solid var(--line);
       border-radius: 8px;
       background: #fffdf8;
       color: var(--ink);
       outline: none;
       padding: 10px 12px;
+    }
+
+    input[type="date"],
+    input[type="time"] {
+      display: block;
+      min-height: 46px;
+      overflow: hidden;
+    }
+
+    input[type="date"]::-webkit-date-and-time-value,
+    input[type="time"]::-webkit-date-and-time-value {
+      min-width: 0;
+      text-align: left;
     }
 
     textarea {
@@ -288,7 +344,7 @@
 
     .primary-row {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 10px;
       margin-bottom: 12px;
     }
@@ -296,7 +352,10 @@
     .field {
       display: grid;
       gap: 6px;
+      width: 100%;
       min-width: 0;
+      max-width: 100%;
+      min-inline-size: 0;
     }
 
     .field.full {
@@ -648,6 +707,17 @@
       padding: 14px;
     }
 
+    .settings-stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .setting-title {
+      margin: 0;
+      color: var(--ink);
+      font-size: 1rem;
+    }
+
     .toggle-row {
       display: flex;
       align-items: center;
@@ -775,7 +845,7 @@
     <header class="topbar">
       <div>
         <p class="eyebrow">CBT JOURNAL</p>
-        <h1>今日の気分を、まず残す</h1>
+        <h1>今日のわたしに気づく時間</h1>
       </div>
       <div class="today-pill" id="todayLabel"></div>
     </header>
@@ -807,7 +877,7 @@
             </div>
             <label class="custom-row" for="moodColor">
               <input id="moodColor" name="moodColor" type="color" value="#9fb7bd" aria-label="気分色">
-              <span>自由な色</span>
+              <span>色を自由に選択</span>
             </label>
           </div>
 
@@ -821,11 +891,28 @@
               <input id="time" name="time" type="time">
             </div>
             <div class="field">
-              <label for="emotion">感情</label>
+              <label for="timeContext">大まかな時間帯</label>
+              <input id="timeContext" name="timeContext" type="text" list="timeContextOptions" placeholder="昼、仕事のあと など">
+              <datalist id="timeContextOptions">
+                <option value="朝"></option>
+                <option value="午前"></option>
+                <option value="昼"></option>
+                <option value="午後"></option>
+                <option value="夕方"></option>
+                <option value="夜"></option>
+                <option value="起きたあと"></option>
+                <option value="食事のあと"></option>
+                <option value="仕事のあと"></option>
+                <option value="学校のあと"></option>
+                <option value="寝る前"></option>
+              </datalist>
+            </div>
+            <div class="field">
+              <label for="emotion">その時の感情</label>
               <input id="emotion" name="emotion" type="text" placeholder="ふつう、不安、うれしいなど">
             </div>
             <div class="field full">
-              <label for="situation">状況</label>
+              <label for="situation">その時の状況</label>
               <textarea id="situation" name="situation" placeholder="何があった？ 何を思い出した？"></textarea>
             </div>
           </div>
@@ -836,11 +923,11 @@
               <textarea id="body" name="body" placeholder="そわそわ、眠い、肩こりなど"></textarea>
             </div>
             <div class="field">
-              <label for="thought">考え</label>
+              <label for="thought">その時浮かんだ考え</label>
               <textarea id="thought" name="thought" placeholder="頭に浮かんだ言葉"></textarea>
             </div>
             <div class="field">
-              <label for="action">行動</label>
+              <label for="action">その時とった行動</label>
               <textarea id="action" name="action" placeholder="休んだ、相談した、避けたなど"></textarea>
             </div>
           </div>
@@ -973,27 +1060,38 @@
       <div class="settings-head">
         <div>
           <h2 id="settingsTitle">設定</h2>
-          <p>毎日使いやすくするための通知とアプリ設定です。</p>
+          <p>リマインドと、記録データのバックアップを管理できます。</p>
         </div>
       </div>
-      <div class="setting-card">
-        <label class="toggle-row" for="reminderEnabled">
-          <span>
-            <strong>リマインド</strong><br>
-            <span class="notice">時間になったら「色だけでもどう？」と知らせます。</span>
-          </span>
-          <input id="reminderEnabled" type="checkbox">
-        </label>
-        <div class="field">
-          <label for="reminderTime">通知する時間</label>
-          <input id="reminderTime" type="time" value="21:00">
+      <div class="settings-stack">
+        <div class="setting-card">
+          <div>
+            <h3 class="setting-title">毎日のリマインド</h3>
+            <p class="notice">Safariの通知はアプリを閉じると鳴らないため、スマホのカレンダー通知を使います。</p>
+          </div>
+          <div class="field">
+            <label for="reminderTime">知らせる時間</label>
+            <input id="reminderTime" type="time" value="21:00">
+          </div>
+          <div class="settings-actions">
+            <button class="button primary" type="button" id="calendarReminderButton">カレンダーに追加</button>
+          </div>
+          <p class="settings-feedback" id="settingsFeedback" aria-live="polite"></p>
+          <p class="notice">ボタンを押したあと、カレンダーの追加画面で「追加」を押してください。毎日同じ時間に知らせます。</p>
         </div>
-        <div class="settings-actions">
-          <button class="button primary" type="button" id="enableNotificationButton">通知を許可</button>
-          <button class="button" type="button" id="testNotificationButton">テスト通知</button>
+        <div class="setting-card">
+          <div>
+            <h3 class="setting-title">データのバックアップ</h3>
+            <p class="notice">機種変更やホーム画面へ追加し直す前に、記録をファイルへ保存できます。</p>
+          </div>
+          <div class="settings-actions">
+            <button class="button primary" type="button" id="settingsExportButton">データを書き出す</button>
+            <button class="button" type="button" id="importButton">データを読み込む</button>
+            <input id="importFileInput" type="file" accept="application/json,.json" hidden>
+          </div>
+          <p class="settings-feedback" id="dataFeedback" aria-live="polite"></p>
+          <p class="notice">読み込み時は、いまの記録を消さずにバックアップの記録を追加します。</p>
         </div>
-        <p class="settings-feedback" id="settingsFeedback" aria-live="polite"></p>
-        <p class="notice">ブラウザ通知は、スマホでホーム画面に追加して開いたときに安定しやすいです。iPhoneでは通知の挙動が端末設定に左右されます。</p>
       </div>
     </section>
   </div>
@@ -1025,14 +1123,15 @@
       action: "行動を書いた日だけ色がつきます。"
     };
     const sampleEntries = [
-      { dateOffset: -5, time: "20:40", emotion: "不安", color: "#d95b2b", intensity: 72, situation: "明日の予定を考えて落ち着かなかった", body: "胸が重い\n肩に力", thought: "間に合わないかも", action: "予定表を見直した" },
-      { dateOffset: -3, time: "22:10", emotion: "安心", color: "#82a878", intensity: 34, situation: "予定をひとつ終えた", body: "呼吸が楽", thought: "思ったよりできた", action: "早めに寝る準備" },
-      { dateOffset: -1, time: "21:00", emotion: "うれしい", color: "#f0c95a", intensity: 42, situation: "音楽を聴きながら片づけた", body: "体が軽い", thought: "少し整った", action: "机の上を片づけた" }
+      { dateOffset: -5, time: "20:40", timeContext: "仕事のあと", emotion: "不安", color: "#d95b2b", intensity: 72, situation: "明日の予定を考えて落ち着かなかった", body: "胸が重い\n肩に力", thought: "間に合わないかも", action: "予定表を見直した" },
+      { dateOffset: -3, time: "22:10", timeContext: "寝る前", emotion: "安心", color: "#82a878", intensity: 34, situation: "予定をひとつ終えた", body: "呼吸が楽", thought: "思ったよりできた", action: "早めに寝る準備" },
+      { dateOffset: -1, time: "12:30", timeContext: "昼", emotion: "うれしい", color: "#f0c95a", intensity: 42, situation: "音楽を聴きながら片づけた", body: "体が軽い", thought: "少し整った", action: "机の上を片づけた" }
     ];
 
     const fields = {
       date: document.querySelector("#date"),
       time: document.querySelector("#time"),
+      timeContext: document.querySelector("#timeContext"),
       emotion: document.querySelector("#emotion"),
       moodColor: document.querySelector("#moodColor"),
       intensity: document.querySelector("#intensity"),
@@ -1079,11 +1178,13 @@
     const exportButton = document.querySelector("#exportButton");
     const tabButtons = document.querySelectorAll(".tab-button");
     const tabPanels = document.querySelectorAll("[data-tab-panel]");
-    const reminderEnabled = document.querySelector("#reminderEnabled");
     const reminderTime = document.querySelector("#reminderTime");
-    const enableNotificationButton = document.querySelector("#enableNotificationButton");
-    const testNotificationButton = document.querySelector("#testNotificationButton");
+    const calendarReminderButton = document.querySelector("#calendarReminderButton");
+    const settingsExportButton = document.querySelector("#settingsExportButton");
+    const importButton = document.querySelector("#importButton");
+    const importFileInput = document.querySelector("#importFileInput");
     const settingsFeedback = document.querySelector("#settingsFeedback");
+    const dataFeedback = document.querySelector("#dataFeedback");
 
     let entries = readEntries();
     let settings = readSettings();
@@ -1180,7 +1281,8 @@
     function updatePreview() {
       const color = fields.moodColor.value;
       document.documentElement.style.setProperty("--accent", color);
-      preview.date.textContent = formatDate(fields.date.value);
+      const timeLabel = [fields.time.value, fields.timeContext.value.trim()].filter(Boolean).join(" / ");
+      preview.date.textContent = `${formatDate(fields.date.value)}${timeLabel ? ` ${timeLabel}` : ""}`;
       preview.situation.textContent = escapeText(fields.situation.value, "今日のできごとを書いてみましょう。");
       preview.emotion.textContent = escapeText(fields.emotion.value, "ふつう");
       preview.dot.style.background = color;
@@ -1198,15 +1300,17 @@
 
     function collectEntry(quickOnly = false) {
       const existing = editingId ? entries.find((entry) => entry.id === editingId) : null;
+      const intensity = Number(fields.intensity.value);
       return {
         id: editingId || crypto.randomUUID(),
         createdAt: existing?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         date: fields.date.value,
         time: fields.time.value,
+        timeContext: fields.timeContext.value.trim(),
         emotion: fields.emotion.value.trim() || "色だけ",
         color: fields.moodColor.value,
-        intensity: Number(fields.intensity.value) || 45,
+        intensity: Number.isFinite(intensity) ? intensity : 45,
         situation: quickOnly ? "" : fields.situation.value.trim(),
         body: quickOnly ? "" : fields.body.value.trim(),
         thought: quickOnly ? "" : fields.thought.value.trim(),
@@ -1236,7 +1340,8 @@
       editingId = quickOnly ? null : entry.id;
       saveButton.textContent = editingId ? "上書きする" : "記録する";
       setVisibleMonth(entry.date);
-      feedback.textContent = `${formatDate(entry.date)} ${entry.time || ""} に「${entry.emotion}」を記録しました。${randomPraise()}`;
+      const savedTime = [entry.time, entry.timeContext].filter(Boolean).join(" / ");
+      feedback.textContent = `${formatDate(entry.date)}${savedTime ? ` ${savedTime}` : ""} に「${entry.emotion}」を記録しました。${randomPraise()}`;
       renderAll();
     }
     function resetForm() {
@@ -1420,7 +1525,8 @@
         title.textContent = `${formatDate(entry.date)} ${entry.emotion || "気分"}`;
         const meta = document.createElement("p");
         meta.className = "entry-meta";
-        meta.textContent = `${entry.intensity ?? 0}/100 / ${entry.quickOnly ? "色だけ記録" : entry.situation || "状況なし"}`;
+        const timeDetail = [entry.time, entry.timeContext].filter(Boolean).join(" / ");
+        meta.textContent = `${entry.intensity ?? 0}/100${timeDetail ? ` / ${timeDetail}` : ""} / ${entry.quickOnly ? "色だけ記録" : entry.situation || "状況なし"}`;
         text.append(title, meta);
         const actions = document.createElement("div");
         actions.className = "entry-actions";
@@ -1452,7 +1558,7 @@
       const samples = sampleEntries.map((sample) => {
         const date = new Date(today);
         date.setDate(today.getDate() + sample.dateOffset);
-        return { id: crypto.randomUUID(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), date: localDateString(date), time: sample.time, emotion: sample.emotion, color: sample.color, intensity: sample.intensity, situation: sample.situation, body: sample.body, thought: sample.thought, action: sample.action, evidence: "", alternative: "", nextAction: "", quickOnly: false };
+        return { id: crypto.randomUUID(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), date: localDateString(date), time: sample.time, timeContext: sample.timeContext, emotion: sample.emotion, color: sample.color, intensity: sample.intensity, situation: sample.situation, body: sample.body, thought: sample.thought, action: sample.action, evidence: "", alternative: "", nextAction: "", quickOnly: false };
       });
       entries = [...entries, ...samples];
       writeEntries();
@@ -1460,61 +1566,137 @@
       renderAll();
     }
     function downloadJson() {
-      const blob = new Blob([JSON.stringify(entries, null, 2)], { type: "application/json" });
+      const backup = {
+        app: "cbt-journal",
+        version: 2,
+        exportedAt: new Date().toISOString(),
+        entries,
+        settings: { time: settings.time || "21:00" }
+      };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
       link.download = `cbt-journal-${localDateString()}.json`;
+      document.body.appendChild(link);
       link.click();
-      URL.revokeObjectURL(url);
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      dataFeedback.textContent = "記録データを書き出しました。大切な場所に保存してください。";
     }
 
-    function didRecordToday() { return entries.some((entry) => entry.date === localDateString()); }
+    function normalizeImportedEntry(entry) {
+      if (!entry || typeof entry !== "object") return null;
+      if (typeof entry.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) return null;
+      const intensity = Number(entry.intensity);
+      const color = typeof entry.color === "string" && /^#[0-9a-f]{6}$/i.test(entry.color) ? entry.color : "#9fb7bd";
+      return {
+        id: typeof entry.id === "string" && entry.id ? entry.id : crypto.randomUUID(),
+        createdAt: typeof entry.createdAt === "string" ? entry.createdAt : new Date().toISOString(),
+        updatedAt: typeof entry.updatedAt === "string" ? entry.updatedAt : new Date().toISOString(),
+        date: entry.date,
+        time: typeof entry.time === "string" && /^\d{2}:\d{2}$/.test(entry.time) ? entry.time : "",
+        timeContext: typeof entry.timeContext === "string" ? entry.timeContext.trim() : "",
+        emotion: typeof entry.emotion === "string" ? entry.emotion.trim() : "色だけ",
+        color,
+        intensity: Number.isFinite(intensity) ? Math.min(100, Math.max(0, intensity)) : 45,
+        situation: typeof entry.situation === "string" ? entry.situation.trim() : "",
+        body: typeof entry.body === "string" ? entry.body.trim() : "",
+        thought: typeof entry.thought === "string" ? entry.thought.trim() : "",
+        action: typeof entry.action === "string" ? entry.action.trim() : "",
+        evidence: typeof entry.evidence === "string" ? entry.evidence.trim() : "",
+        alternative: typeof entry.alternative === "string" ? entry.alternative.trim() : "",
+        nextAction: typeof entry.nextAction === "string" ? entry.nextAction.trim() : "",
+        quickOnly: Boolean(entry.quickOnly)
+      };
+    }
+    async function importBackupFile(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        const parsed = JSON.parse(await file.text());
+        const rawEntries = Array.isArray(parsed) ? parsed : parsed?.entries;
+        if (!Array.isArray(rawEntries)) throw new Error("invalid backup");
+        const importedEntries = rawEntries.map(normalizeImportedEntry).filter(Boolean);
+        if (rawEntries.length > 0 && importedEntries.length === 0) throw new Error("no valid entries");
+        const combined = new Map(entries.map((entry) => [entry.id, entry]));
+        importedEntries.forEach((entry) => {
+          const current = combined.get(entry.id);
+          if (!current || String(entry.updatedAt) >= String(current.updatedAt)) combined.set(entry.id, entry);
+        });
+        entries = Array.from(combined.values());
+        if (!Array.isArray(parsed) && typeof parsed?.settings?.time === "string" && /^\d{2}:\d{2}$/.test(parsed.settings.time)) {
+          settings.time = parsed.settings.time;
+          writeSettings();
+        }
+        writeEntries();
+        renderAll();
+        dataFeedback.textContent = `${importedEntries.length}件を読み込み、いまの記録とまとめました。`;
+      } catch {
+        dataFeedback.textContent = "読み込めませんでした。CBTジャーナルから書き出したJSONファイルを選んでください。";
+      } finally {
+        importFileInput.value = "";
+      }
+    }
+
     function renderSettings() {
-      reminderEnabled.checked = Boolean(settings.enabled);
       reminderTime.value = settings.time || "21:00";
     }
-    async function showReminderNotification(test = false) {
-      const title = test ? "テスト通知" : "今日の気分、色だけでも残す？";
-      const body = test ? "通知はこんな感じで届きます。" : "1タップで今日の色だけ記録できます。";
-      if (!("Notification" in window)) {
-        settingsFeedback.textContent = "このブラウザは通知に対応していないようです。";
-        return;
-      }
-      if (Notification.permission !== "granted") {
-        settingsFeedback.textContent = "先に「通知を許可」を押してください。";
-        return;
-      }
-      if ("serviceWorker" in navigator && location.protocol !== "file:") {
-        const registration = await navigator.serviceWorker.ready;
-        registration.showNotification(title, { body, icon: "./icon.svg", badge: "./icon.svg" });
-      } else {
-        new Notification(title, { body, icon: "./icon.svg" });
-      }
+    function formatIcsLocal(date) {
+      return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}00`;
     }
-    async function requestNotificationPermission() {
-      if (!("Notification" in window)) {
-        settingsFeedback.textContent = "このブラウザは通知に対応していないようです。";
-        return;
-      }
-      const result = await Notification.requestPermission();
-      settingsFeedback.textContent = result === "granted" ? "通知を許可しました。" : "通知はまだ許可されていません。";
+    function formatIcsUtc(date) {
+      return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
     }
-    function saveReminderSettings() {
-      settings.enabled = reminderEnabled.checked;
+    function escapeIcsText(value) {
+      return String(value).replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
+    }
+    function saveReminderTime() {
       settings.time = reminderTime.value || "21:00";
       writeSettings();
-      settingsFeedback.textContent = settings.enabled ? `${settings.time} にリマインドします。` : "リマインドをオフにしました。";
+      settingsFeedback.textContent = `${settings.time} に設定しました。カレンダーへ追加すると有効になります。`;
     }
-    function checkReminder() {
-      if (!settings.enabled || !settings.time) return;
+    function downloadCalendarReminder() {
+      saveReminderTime();
+      const [hour, minute] = settings.time.split(":").map(Number);
       const now = new Date();
-      const today = localDateString(now);
-      const currentTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-      if (currentTime !== settings.time || settings.lastReminderDate === today || didRecordToday()) return;
-      settings.lastReminderDate = today;
-      writeSettings();
-      showReminderNotification(false);
+      const start = new Date();
+      start.setHours(hour, minute, 0, 0);
+      if (start <= now) start.setDate(start.getDate() + 1);
+      const pageUrl = location.protocol === "http:" || location.protocol === "https:" ? location.href : "";
+      const description = `色だけでも、今日の気分を残してみよう。${pageUrl ? `\n${pageUrl}` : ""}`;
+      const calendar = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//CBT Journal//Daily Reminder//JA",
+        "CALSCALE:GREGORIAN",
+        "BEGIN:VEVENT",
+        `UID:cbt-journal-daily-${settings.time.replace(":", "")}@local`,
+        `DTSTAMP:${formatIcsUtc(now)}`,
+        `DTSTART:${formatIcsLocal(start)}`,
+        "DURATION:PT10M",
+        "RRULE:FREQ=DAILY",
+        `SUMMARY:${escapeIcsText("気分を記録する")}`,
+        `DESCRIPTION:${escapeIcsText(description)}`,
+        "BEGIN:VALARM",
+        "TRIGGER:PT0S",
+        "ACTION:DISPLAY",
+        `DESCRIPTION:${escapeIcsText("気分を記録する時間です")}`,
+        "END:VALARM",
+        "END:VEVENT",
+        "END:VCALENDAR",
+        ""
+      ].join("\r\n");
+      const blob = new Blob([calendar], { type: "text/calendar;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "cbt-journal-reminder.ics";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      settingsFeedback.textContent = "カレンダー用の予定を作りました。表示された画面で追加してください。";
     }
 
     moodPalette.addEventListener("click", (event) => {
@@ -1592,17 +1774,17 @@
     });
     sampleButton.addEventListener("click", addSampleEntries);
     exportButton.addEventListener("click", downloadJson);
-    reminderEnabled.addEventListener("change", saveReminderSettings);
-    reminderTime.addEventListener("change", saveReminderSettings);
-    enableNotificationButton.addEventListener("click", requestNotificationPermission);
-    testNotificationButton.addEventListener("click", () => showReminderNotification(true));
+    settingsExportButton.addEventListener("click", downloadJson);
+    importButton.addEventListener("click", () => importFileInput.click());
+    importFileInput.addEventListener("change", importBackupFile);
+    reminderTime.addEventListener("change", saveReminderTime);
+    calendarReminderButton.addEventListener("click", downloadCalendarReminder);
     window.addEventListener("resize", renderChart);
 
     todayLabel.textContent = new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric", weekday: "long" });
     buildMoodPalette();
     resetForm();
     renderAll();
-    window.setInterval(checkReminder, 30000);
 
     if ("serviceWorker" in navigator && location.protocol !== "file:") {
       navigator.serviceWorker.register("./service-worker.js").catch(() => {});
