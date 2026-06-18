@@ -578,21 +578,14 @@
       font-weight: 800;
     }
 
-    .month-actions,
-    .calendar-modes {
-      display: flex;
-      flex-wrap: wrap;
+    .month-actions {
+      display: grid;
+      grid-template-columns: 48px minmax(88px, 1fr) 48px;
       gap: 8px;
-      justify-content: flex-end;
+      width: min(100%, 220px);
     }
 
-    .calendar-modes {
-      justify-content: flex-start;
-      margin-bottom: 10px;
-    }
-
-    .small-button,
-    .mode-button {
+    .small-button {
       border: 1px solid var(--line);
       border-radius: 8px;
       background: #fff7eb;
@@ -602,10 +595,14 @@
       font-weight: 800;
     }
 
-    .mode-button[aria-pressed="true"] {
-      border-color: var(--ink);
-      background: var(--accent);
-      color: #fffaf1;
+    .month-actions .small-button {
+      min-height: 40px;
+      padding: 7px 8px;
+      font-size: 1.08rem;
+    }
+
+    .month-actions #todayMonthButton {
+      font-size: 0.88rem;
     }
 
     .week-row,
@@ -1055,26 +1052,19 @@
 
         <div class="calendar-toolbar">
           <div>
-            <h2 id="calendarTitle">項目別カレンダー</h2>
+            <h2 id="calendarTitle">気分カレンダー</h2>
             <div class="month-label" id="monthLabel"></div>
-            <p id="calendarModeHint">気分色を日ごとに見ます。</p>
           </div>
           <div class="month-actions">
-            <button class="small-button" type="button" id="prevMonthButton">前月</button>
+            <button class="small-button" type="button" id="prevMonthButton" aria-label="前の月">◁</button>
             <button class="small-button" type="button" id="todayMonthButton">今月</button>
-            <button class="small-button" type="button" id="nextMonthButton">翌月</button>
+            <button class="small-button" type="button" id="nextMonthButton" aria-label="次の月">▷</button>
           </div>
-        </div>
-        <div class="calendar-modes" id="calendarModes" aria-label="カレンダーで見る項目">
-          <button class="mode-button" type="button" data-mode="mood" aria-pressed="true">気分</button>
-          <button class="mode-button" type="button" data-mode="body" aria-pressed="false">からだの状況</button>
-          <button class="mode-button" type="button" data-mode="thought" aria-pressed="false">考え</button>
-          <button class="mode-button" type="button" data-mode="action" aria-pressed="false">行動</button>
         </div>
         <div class="week-row" aria-hidden="true">
           <span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span>
         </div>
-        <div class="month-grid" id="monthGrid" aria-label="月ごとの項目別カレンダー"></div>
+        <div class="month-grid" id="monthGrid" aria-label="月ごとの気分カレンダー"></div>
         <p class="calendar-note" id="monthSelection">記録がある日を押すと、その日の最新記録を開けます。</p>
 
         <div class="summary-row">
@@ -1120,7 +1110,10 @@
           </div>
           <div class="field">
             <label for="reminderTime">知らせる時間</label>
-            <input id="reminderTime" type="time" value="21:00">
+            <div class="picker-shell">
+              <span class="picker-value" id="reminderTimeDisplay" aria-hidden="true">21:00</span>
+              <input id="reminderTime" type="time" value="21:00">
+            </div>
           </div>
           <div class="settings-actions">
             <button class="button primary" type="button" id="calendarReminderButton">カレンダーに追加</button>
@@ -1164,13 +1157,6 @@
       "いまの気分に気づけたのが大事。よくできました。",
       "短くても記録は記録。続ける力になっています。"
     ];
-    const modeLabels = { mood: "気分", body: "からだの状況", thought: "考え", action: "行動" };
-    const modeHints = {
-      mood: "気分色を日ごとに見ます。",
-      body: "からだの状況を書いた日だけ色がつきます。",
-      thought: "考えを書いた日だけ色がつきます。",
-      action: "行動を書いた日だけ色がつきます。"
-    };
     const sampleEntries = [
       { dateOffset: -5, time: "20:40", timeContext: "仕事のあと", emotion: "不安", color: "#d95b2b", intensity: 72, situation: "明日の予定を考えて落ち着かなかった", body: "胸が重い\n肩に力", thought: "間に合わないかも", action: "予定表を見直した" },
       { dateOffset: -3, time: "22:10", timeContext: "寝る前", emotion: "安心", color: "#82a878", intensity: 34, situation: "予定をひとつ終えた", body: "呼吸が楽", thought: "思ったよりできた", action: "早めに寝る準備" },
@@ -1215,8 +1201,6 @@
     const chart = document.querySelector("#moodChart");
     const monthLabel = document.querySelector("#monthLabel");
     const monthGrid = document.querySelector("#monthGrid");
-    const calendarModes = document.querySelector("#calendarModes");
-    const calendarModeHint = document.querySelector("#calendarModeHint");
     const monthSelection = document.querySelector("#monthSelection");
     const prevMonthButton = document.querySelector("#prevMonthButton");
     const todayMonthButton = document.querySelector("#todayMonthButton");
@@ -1230,6 +1214,7 @@
     const tabButtons = document.querySelectorAll(".tab-button");
     const tabPanels = document.querySelectorAll("[data-tab-panel]");
     const reminderTime = document.querySelector("#reminderTime");
+    const reminderTimeDisplay = document.querySelector("#reminderTimeDisplay");
     const calendarReminderButton = document.querySelector("#calendarReminderButton");
     const settingsExportButton = document.querySelector("#settingsExportButton");
     const importButton = document.querySelector("#importButton");
@@ -1242,7 +1227,6 @@
     let editingId = null;
     let clearArmed = false;
     let clearTimer = null;
-    let calendarMode = "mood";
     let visibleMonth = new Date();
     visibleMonth.setDate(1);
 
@@ -1390,12 +1374,12 @@
         entries.push(entry);
       }
       writeEntries();
-      editingId = quickOnly ? null : entry.id;
-      saveButton.textContent = editingId ? "上書きする" : "記録する";
       setVisibleMonth(entry.date);
       const savedTime = [entry.time, entry.timeContext].filter(Boolean).join(" / ");
-      feedback.textContent = `${formatDate(entry.date)}${savedTime ? ` ${savedTime}` : ""} に「${entry.emotion}」を記録しました。${randomPraise()}`;
+      const savedMessage = `${formatDate(entry.date)}${savedTime ? ` ${savedTime}` : ""} に「${entry.emotion}」を記録しました。${randomPraise()}`;
+      resetForm();
       renderAll();
+      feedback.textContent = savedMessage;
     }
     function resetForm() {
       editingId = null;
@@ -1487,21 +1471,9 @@
         context.stroke();
       });
     }
-    function itemForMode(entry) {
-      if (!entry) return "";
-      if (calendarMode === "mood") return entry.emotion || "気分";
-      return firstLine(entry[calendarMode]);
-    }
-    function entryMatchesMode(entry) {
-      if (!entry) return false;
-      if (calendarMode === "mood") return true;
-      return Boolean(firstLine(entry[calendarMode]));
-    }
     function renderMonthCalendar() {
       monthGrid.innerHTML = "";
       monthLabel.textContent = visibleMonth.toLocaleDateString("ja-JP", { year: "numeric", month: "long" });
-      calendarModeHint.textContent = modeHints[calendarMode];
-      calendarModes.querySelectorAll(".mode-button").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.mode === calendarMode)));
       const year = visibleMonth.getFullYear();
       const month = visibleMonth.getMonth();
       const startDay = new Date(year, month, 1);
@@ -1518,14 +1490,14 @@
         date.setDate(startDay.getDate() + index);
         const key = localDateString(date);
         const allDayEntries = entriesByDate.get(key) || [];
-        const matching = sortEntries(allDayEntries.filter(entryMatchesMode), "desc");
+        const matching = sortEntries(allDayEntries, "desc");
         const latest = matching[0];
-        const labelText = itemForMode(latest);
+        const labelText = latest ? latest.emotion || "気分" : "";
         const button = document.createElement("button");
         button.type = "button";
         button.className = "month-day";
         button.dataset.date = key;
-        button.setAttribute("aria-label", latest ? `${formatDate(key)} ${modeLabels[calendarMode]} ${labelText}` : `${formatDate(key)} ${modeLabels[calendarMode]}の記録なし`);
+        button.setAttribute("aria-label", latest ? `${formatDate(key)} 気分 ${labelText}` : `${formatDate(key)} 気分の記録なし`);
         if (date.getMonth() !== month) button.classList.add("other-month");
         if (key === todayKey) button.classList.add("today");
         if (latest) {
@@ -1694,6 +1666,7 @@
 
     function renderSettings() {
       reminderTime.value = settings.time || "21:00";
+      reminderTimeDisplay.textContent = reminderTime.value;
     }
     function formatIcsLocal(date) {
       return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}00`;
@@ -1706,6 +1679,7 @@
     }
     function saveReminderTime() {
       settings.time = reminderTime.value || "21:00";
+      reminderTimeDisplay.textContent = settings.time;
       writeSettings();
       settingsFeedback.textContent = `${settings.time} に設定しました。カレンダーへ追加すると有効になります。`;
     }
@@ -1787,12 +1761,6 @@
     prevMonthButton.addEventListener("click", () => { visibleMonth.setMonth(visibleMonth.getMonth() - 1); renderMonthCalendar(); });
     todayMonthButton.addEventListener("click", () => { setVisibleMonth(localDateString()); renderMonthCalendar(); });
     nextMonthButton.addEventListener("click", () => { visibleMonth.setMonth(visibleMonth.getMonth() + 1); renderMonthCalendar(); });
-    calendarModes.addEventListener("click", (event) => {
-      const button = event.target.closest(".mode-button");
-      if (!button) return;
-      calendarMode = button.dataset.mode;
-      renderMonthCalendar();
-    });
     monthGrid.addEventListener("click", (event) => {
       const button = event.target.closest(".month-day");
       if (!button) return;
@@ -1830,6 +1798,7 @@
     settingsExportButton.addEventListener("click", downloadJson);
     importButton.addEventListener("click", () => importFileInput.click());
     importFileInput.addEventListener("change", importBackupFile);
+    reminderTime.addEventListener("input", () => { reminderTimeDisplay.textContent = reminderTime.value || "時間を選択"; });
     reminderTime.addEventListener("change", saveReminderTime);
     calendarReminderButton.addEventListener("click", downloadCalendarReminder);
     window.addEventListener("resize", renderChart);
