@@ -328,6 +328,49 @@
       text-align: left;
     }
 
+    .picker-shell {
+      position: relative;
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffdf8;
+      overflow: hidden;
+    }
+
+    .picker-shell:focus-within {
+      border-color: var(--accent);
+      outline: 3px solid rgba(217, 91, 43, 0.18);
+      outline-offset: 1px;
+    }
+
+    .picker-value {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      padding: 10px 12px;
+      color: var(--ink);
+      pointer-events: none;
+    }
+
+    .picker-shell input[type="date"],
+    .picker-shell input[type="time"] {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      height: 100%;
+      border: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
     textarea {
       min-height: 86px;
       resize: vertical;
@@ -884,11 +927,17 @@
           <div class="primary-row">
             <div class="field">
               <label for="date">日付</label>
-              <input id="date" name="date" type="date" required>
+              <div class="picker-shell">
+                <span class="picker-value" id="dateDisplay" aria-hidden="true">日付を選択</span>
+                <input id="date" name="date" type="date" required>
+              </div>
             </div>
             <div class="field">
               <label for="time">時間</label>
-              <input id="time" name="time" type="time">
+              <div class="picker-shell">
+                <span class="picker-value" id="timeDisplay" aria-hidden="true">時間を選択</span>
+                <input id="time" name="time" type="time">
+              </div>
             </div>
             <div class="field">
               <label for="timeContext">大まかな時間帯</label>
@@ -919,7 +968,7 @@
 
           <div class="detail-grid">
             <div class="field">
-              <label for="body">からだ</label>
+              <label for="body">からだの状況</label>
               <textarea id="body" name="body" placeholder="そわそわ、眠い、肩こりなど"></textarea>
             </div>
             <div class="field">
@@ -977,7 +1026,7 @@
         <div class="bubble-map">
           <div class="bubble body">
             <div>
-              <h3>からだ</h3>
+              <h3>からだの状況</h3>
               <p id="previewBody">体の反応</p>
             </div>
           </div>
@@ -1018,7 +1067,7 @@
         </div>
         <div class="calendar-modes" id="calendarModes" aria-label="カレンダーで見る項目">
           <button class="mode-button" type="button" data-mode="mood" aria-pressed="true">気分</button>
-          <button class="mode-button" type="button" data-mode="body" aria-pressed="false">からだ</button>
+          <button class="mode-button" type="button" data-mode="body" aria-pressed="false">からだの状況</button>
           <button class="mode-button" type="button" data-mode="thought" aria-pressed="false">考え</button>
           <button class="mode-button" type="button" data-mode="action" aria-pressed="false">行動</button>
         </div>
@@ -1115,10 +1164,10 @@
       "いまの気分に気づけたのが大事。よくできました。",
       "短くても記録は記録。続ける力になっています。"
     ];
-    const modeLabels = { mood: "気分", body: "からだ", thought: "考え", action: "行動" };
+    const modeLabels = { mood: "気分", body: "からだの状況", thought: "考え", action: "行動" };
     const modeHints = {
       mood: "気分色を日ごとに見ます。",
-      body: "からだの反応を書いた日だけ色がつきます。",
+      body: "からだの状況を書いた日だけ色がつきます。",
       thought: "考えを書いた日だけ色がつきます。",
       action: "行動を書いた日だけ色がつきます。"
     };
@@ -1155,6 +1204,8 @@
     const form = document.querySelector("#journalForm");
     const moodPalette = document.querySelector("#moodPalette");
     const intensityValue = document.querySelector("#intensityValue");
+    const dateDisplay = document.querySelector("#dateDisplay");
+    const timeDisplay = document.querySelector("#timeDisplay");
     const feedback = document.querySelector("#feedback");
     const saveButton = document.querySelector("#saveButton");
     const quickSaveButton = document.querySelector("#quickSaveButton");
@@ -1281,6 +1332,8 @@
     function updatePreview() {
       const color = fields.moodColor.value;
       document.documentElement.style.setProperty("--accent", color);
+      dateDisplay.textContent = fields.date.value ? fields.date.value.replace(/-/g, "/") : "日付を選択";
+      timeDisplay.textContent = fields.time.value || "時間を選択";
       const timeLabel = [fields.time.value, fields.timeContext.value.trim()].filter(Boolean).join(" / ");
       preview.date.textContent = `${formatDate(fields.date.value)}${timeLabel ? ` ${timeLabel}` : ""}`;
       preview.situation.textContent = escapeText(fields.situation.value, "今日のできごとを書いてみましょう。");
