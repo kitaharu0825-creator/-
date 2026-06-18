@@ -1,4 +1,4 @@
-const CACHE_NAME = "cbt-journal-v14";
+const CACHE_NAME = "cbt-journal-v15";
 const APP_FILES = [
   "./",
   "./index.html",
