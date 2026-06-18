@@ -544,6 +544,37 @@
       margin-bottom: 14px;
     }
 
+    .chart-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .chart-toolbar h2 {
+      margin: 0;
+    }
+
+    .day-actions {
+      display: grid;
+      grid-template-columns: 44px minmax(72px, 1fr) 44px;
+      gap: 8px;
+      width: min(100%, 190px);
+    }
+
+    .day-actions .small-button {
+      min-height: 38px;
+      padding: 6px 8px;
+    }
+
+    .wave-day-label {
+      margin: 0 0 8px;
+      color: var(--accent-dark);
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+
     .chart-wrap {
       width: 100%;
       height: 220px;
@@ -557,6 +588,15 @@
       display: block;
       width: 100%;
       height: 100%;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .chart-note {
+      min-height: 1.4em;
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.84rem;
     }
 
     .calendar-toolbar {
@@ -791,6 +831,7 @@
 
       .topbar,
       .record-head,
+      .chart-toolbar,
       .calendar-toolbar,
       .history-head,
       .settings-head {
@@ -840,7 +881,12 @@
       }
 
       .chart-wrap {
-        height: 190px;
+        height: 230px;
+      }
+
+      .day-actions {
+        width: 100%;
+        max-width: 220px;
       }
 
       .week-row,
@@ -1044,10 +1090,19 @@
 
       <section class="panel calendar-panel" aria-labelledby="calendarTitle">
         <div class="chart-block">
-          <h2>気分の波</h2>
+          <div class="chart-toolbar">
+            <h2>1日の気分の波</h2>
+            <div class="day-actions">
+              <button class="small-button" type="button" id="prevWaveDayButton" aria-label="前の日">◁</button>
+              <button class="small-button" type="button" id="todayWaveDayButton">今日</button>
+              <button class="small-button" type="button" id="nextWaveDayButton" aria-label="次の日">▷</button>
+            </div>
+          </div>
+          <p class="wave-day-label" id="waveDayLabel"></p>
           <div class="chart-wrap">
             <canvas id="moodChart" aria-label="気分の波グラフ"></canvas>
           </div>
+          <p class="chart-note" id="chartSelection" aria-live="polite">点を押すと、その時の記録を確認できます。</p>
         </div>
 
         <div class="calendar-toolbar">
@@ -1199,6 +1254,11 @@
     const clearAllButton = document.querySelector("#clearAllButton");
     const todayLabel = document.querySelector("#todayLabel");
     const chart = document.querySelector("#moodChart");
+    const waveDayLabel = document.querySelector("#waveDayLabel");
+    const chartSelection = document.querySelector("#chartSelection");
+    const prevWaveDayButton = document.querySelector("#prevWaveDayButton");
+    const todayWaveDayButton = document.querySelector("#todayWaveDayButton");
+    const nextWaveDayButton = document.querySelector("#nextWaveDayButton");
     const monthLabel = document.querySelector("#monthLabel");
     const monthGrid = document.querySelector("#monthGrid");
     const monthSelection = document.querySelector("#monthSelection");
@@ -1227,6 +1287,9 @@
     let editingId = null;
     let clearArmed = false;
     let clearTimer = null;
+    let visibleWaveDate = localDateString();
+    let selectedChartEntryId = null;
+    let chartPoints = [];
     let visibleMonth = new Date();
     visibleMonth.setDate(1);
 
@@ -1375,6 +1438,7 @@
       }
       writeEntries();
       setVisibleMonth(entry.date);
+      visibleWaveDate = entry.date;
       const savedTime = [entry.time, entry.timeContext].filter(Boolean).join(" / ");
       const savedMessage = `${formatDate(entry.date)}${savedTime ? ` ${savedTime}` : ""} に「${entry.emotion}」を記録しました。${randomPraise()}`;
       resetForm();
@@ -1401,36 +1465,52 @@
       });
       saveButton.textContent = "上書きする";
       setVisibleMonth(entry.date || localDateString());
+      visibleWaveDate = entry.date || localDateString();
       feedback.textContent = `${formatDate(entry.date)}の記録を開いています。`;
       updatePreview();
       renderMonthCalendar();
       switchTab("record");
     }
 
-    function getDailySummaries() {
-      const map = new Map();
-      sortEntries(entries, "asc").forEach((entry) => {
-        if (!entry.date) return;
-        if (!map.has(entry.date)) map.set(entry.date, { date: entry.date, total: 0, count: 0, latest: entry });
-        const item = map.get(entry.date);
-        item.total += Number(entry.intensity) || 0;
-        item.count += 1;
-        item.latest = entry;
-      });
-      return Array.from(map.values()).map((item) => ({ date: item.date, intensity: Math.round(item.total / item.count), color: item.latest.color, emotion: item.latest.emotion }));
+    function formatWaveDay(dateString) {
+      const date = new Date(`${dateString}T00:00:00`);
+      return date.toLocaleDateString("ja-JP", { month: "long", day: "numeric", weekday: "short" });
+    }
+    function entryMinutes(entry, index, count) {
+      const match = String(entry.time || "").match(/^(\d{2}):(\d{2})$/);
+      if (match) return Math.min(1439, Number(match[1]) * 60 + Number(match[2]));
+      const created = new Date(entry.createdAt || "");
+      if (!Number.isNaN(created.getTime()) && localDateString(created) === visibleWaveDate) {
+        return created.getHours() * 60 + created.getMinutes();
+      }
+      return count === 1 ? 720 : Math.round(((index + 1) / (count + 1)) * 1440);
+    }
+    function updateChartSelection(entry) {
+      if (!entry) {
+        chartSelection.textContent = "点を押すと、その時の記録を確認できます。";
+        return;
+      }
+      const when = [entry.time || "時間未入力", entry.timeContext].filter(Boolean).join(" / ");
+      chartSelection.textContent = `${when}　${entry.emotion || "気分"}　強さ ${Number(entry.intensity) || 0}/100`;
     }
     function renderChart() {
       const context = chart.getContext("2d");
       const rect = chart.getBoundingClientRect();
       if (rect.width < 1 || rect.height < 1) return;
+      waveDayLabel.textContent = formatWaveDay(visibleWaveDate);
+      chart.setAttribute("aria-label", `${formatWaveDay(visibleWaveDate)}の気分の波`);
       const ratio = window.devicePixelRatio || 1;
       chart.width = Math.max(1, Math.floor(rect.width * ratio));
       chart.height = Math.max(1, Math.floor(rect.height * ratio));
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
       const width = rect.width;
       const height = rect.height;
-      const padX = 42;
-      const padY = 25;
+      const padLeft = 42;
+      const padRight = 14;
+      const padTop = 20;
+      const padBottom = 32;
+      const plotWidth = width - padLeft - padRight;
+      const plotHeight = height - padTop - padBottom;
       context.clearRect(0, 0, width, height);
       context.fillStyle = "#fffdf8";
       context.fillRect(0, 0, width, height);
@@ -1438,38 +1518,85 @@
       context.fillStyle = "#746b63";
       context.font = "12px -apple-system, BlinkMacSystemFont, sans-serif";
       for (let i = 0; i <= 4; i += 1) {
-        const y = padY + ((height - padY * 2) / 4) * i;
+        const y = padTop + (plotHeight / 4) * i;
         context.beginPath();
-        context.moveTo(padX, y);
-        context.lineTo(width - 16, y);
+        context.moveTo(padLeft, y);
+        context.lineTo(width - padRight, y);
         context.stroke();
+        context.textAlign = "right";
+        context.fillText(String(100 - i * 25), padLeft - 8, y + 4);
       }
-      context.fillText("強い", 8, padY + 4);
-      context.fillText("穏やか", 4, height - padY + 4);
-      const points = getDailySummaries().slice(-14).map((item, index, list) => {
-        const plotWidth = width - padX - 22;
-        const plotHeight = height - padY * 2;
-        return { ...item, x: padX + (list.length === 1 ? plotWidth / 2 : (plotWidth / (list.length - 1)) * index), y: padY + plotHeight - (item.intensity / 100) * plotHeight };
+      [0, 6, 12, 18, 24].forEach((hour) => {
+        const x = padLeft + (hour / 24) * plotWidth;
+        context.beginPath();
+        context.moveTo(x, padTop);
+        context.lineTo(x, height - padBottom);
+        context.stroke();
+        context.textAlign = hour === 0 ? "left" : hour === 24 ? "right" : "center";
+        context.fillText(`${hour}時`, x, height - 10);
       });
-      if (points.length === 0) {
+      const dayEntries = sortEntries(entries.filter((entry) => entry.date === visibleWaveDate), "asc").slice(-24);
+      chartPoints = dayEntries.map((entry, index, list) => {
+        const intensity = Number(entry.intensity);
+        const value = Number.isFinite(intensity) ? Math.min(100, Math.max(0, intensity)) : 45;
+        const minutes = entryMinutes(entry, index, list.length);
+        return {
+          entry,
+          x: padLeft + (minutes / 1440) * plotWidth,
+          y: padTop + plotHeight - (value / 100) * plotHeight
+        };
+      });
+      if (chartPoints.length === 0) {
         context.font = "14px -apple-system, BlinkMacSystemFont, sans-serif";
-        context.fillText("記録すると気分の波が出ます。", padX, height / 2);
+        context.fillStyle = "#746b63";
+        context.textAlign = "center";
+        context.fillText("この日の記録はまだありません。", padLeft + plotWidth / 2, padTop + plotHeight / 2);
+        selectedChartEntryId = null;
+        chartSelection.textContent = "同じ日に何度か記録すると、1日の波がつながります。";
         return;
       }
       context.beginPath();
-      points.forEach((point, index) => index === 0 ? context.moveTo(point.x, point.y) : context.lineTo(point.x, point.y));
+      chartPoints.forEach((point, index) => index === 0 ? context.moveTo(point.x, point.y) : context.lineTo(point.x, point.y));
       context.strokeStyle = "#2f2a27";
       context.lineWidth = 2.5;
       context.stroke();
-      points.forEach((point) => {
+      chartPoints.forEach((point) => {
+        const selected = point.entry.id === selectedChartEntryId;
         context.beginPath();
-        context.arc(point.x, point.y, 7, 0, Math.PI * 2);
-        context.fillStyle = point.color || "#9fb7bd";
+        context.arc(point.x, point.y, selected ? 10 : 7, 0, Math.PI * 2);
+        context.fillStyle = point.entry.color || "#9fb7bd";
         context.fill();
-        context.strokeStyle = "#fffdf8";
+        context.strokeStyle = selected ? "#2f2a27" : "#fffdf8";
         context.lineWidth = 3;
         context.stroke();
       });
+      const selectedPoint = chartPoints.find((point) => point.entry.id === selectedChartEntryId);
+      updateChartSelection(selectedPoint?.entry || null);
+    }
+    function shiftWaveDay(offset) {
+      const date = new Date(`${visibleWaveDate}T00:00:00`);
+      date.setDate(date.getDate() + offset);
+      visibleWaveDate = localDateString(date);
+      selectedChartEntryId = null;
+      renderChart();
+    }
+    function selectChartPoint(event) {
+      if (chartPoints.length === 0) return;
+      const rect = chart.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      let nearest = null;
+      let nearestDistance = 28;
+      chartPoints.forEach((point) => {
+        const distance = Math.hypot(point.x - x, point.y - y);
+        if (distance < nearestDistance) {
+          nearest = point;
+          nearestDistance = distance;
+        }
+      });
+      if (!nearest) return;
+      selectedChartEntryId = nearest.entry.id;
+      renderChart();
     }
     function renderMonthCalendar() {
       monthGrid.innerHTML = "";
@@ -1758,6 +1885,14 @@
       resetForm();
       renderAll();
     });
+    prevWaveDayButton.addEventListener("click", () => shiftWaveDay(-1));
+    todayWaveDayButton.addEventListener("click", () => {
+      visibleWaveDate = localDateString();
+      selectedChartEntryId = null;
+      renderChart();
+    });
+    nextWaveDayButton.addEventListener("click", () => shiftWaveDay(1));
+    chart.addEventListener("click", selectChartPoint);
     prevMonthButton.addEventListener("click", () => { visibleMonth.setMonth(visibleMonth.getMonth() - 1); renderMonthCalendar(); });
     todayMonthButton.addEventListener("click", () => { setVisibleMonth(localDateString()); renderMonthCalendar(); });
     nextMonthButton.addEventListener("click", () => { visibleMonth.setMonth(visibleMonth.getMonth() + 1); renderMonthCalendar(); });
