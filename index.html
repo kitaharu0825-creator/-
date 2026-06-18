@@ -416,6 +416,10 @@
       margin-top: 10px;
     }
 
+    .reflection-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .extra-section {
       margin-top: 12px;
       border-top: 1px solid var(--line);
@@ -1065,10 +1069,14 @@
 
           <details class="extra-section">
             <summary>もう少し整理する</summary>
-            <div class="detail-grid">
+            <div class="detail-grid reflection-grid">
               <div class="field">
-                <label for="evidence">そう思う根拠</label>
-                <textarea id="evidence" name="evidence" placeholder="事実として言えること"></textarea>
+                <label for="evidence">本当にそうだと分かっている事実はどこまで？</label>
+                <textarea id="evidence" name="evidence" placeholder="確認できている事実だけを書いてみる"></textarea>
+              </div>
+              <div class="field">
+                <label for="uncertainty">まだそうと決まったわけではない部分はどこ？</label>
+                <textarea id="uncertainty" name="uncertainty" placeholder="まだ確認できていないこと、別の可能性など"></textarea>
               </div>
               <div class="field">
                 <label for="alternative">別の見方</label>
@@ -1293,6 +1301,7 @@
       thought: document.querySelector("#thought"),
       action: document.querySelector("#action"),
       evidence: document.querySelector("#evidence"),
+      uncertainty: document.querySelector("#uncertainty"),
       alternative: document.querySelector("#alternative"),
       nextAction: document.querySelector("#nextAction")
     };
@@ -1485,6 +1494,7 @@
         thought: quickOnly ? "" : fields.thought.value.trim(),
         action: quickOnly ? "" : fields.action.value.trim(),
         evidence: quickOnly ? "" : fields.evidence.value.trim(),
+        uncertainty: quickOnly ? "" : fields.uncertainty.value.trim(),
         alternative: quickOnly ? "" : fields.alternative.value.trim(),
         nextAction: quickOnly ? "" : fields.nextAction.value.trim(),
         quickOnly
@@ -1780,6 +1790,7 @@
           entry.thought,
           entry.action,
           entry.evidence,
+          entry.uncertainty,
           entry.alternative,
           entry.nextAction
         ].join("\n").toLocaleLowerCase("ja-JP");
@@ -1838,7 +1849,7 @@
       const samples = sampleEntries.map((sample) => {
         const date = new Date(today);
         date.setDate(today.getDate() + sample.dateOffset);
-        return { id: crypto.randomUUID(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), date: localDateString(date), time: sample.time, timeContext: sample.timeContext, emotion: sample.emotion, color: sample.color, intensity: sample.intensity, situation: sample.situation, body: sample.body, thought: sample.thought, action: sample.action, evidence: "", alternative: "", nextAction: "", quickOnly: false };
+        return { id: crypto.randomUUID(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), date: localDateString(date), time: sample.time, timeContext: sample.timeContext, emotion: sample.emotion, color: sample.color, intensity: sample.intensity, situation: sample.situation, body: sample.body, thought: sample.thought, action: sample.action, evidence: "", uncertainty: "", alternative: "", nextAction: "", quickOnly: false };
       });
       entries = [...entries, ...samples];
       writeEntries();
@@ -1885,6 +1896,7 @@
         thought: typeof entry.thought === "string" ? entry.thought.trim() : "",
         action: typeof entry.action === "string" ? entry.action.trim() : "",
         evidence: typeof entry.evidence === "string" ? entry.evidence.trim() : "",
+        uncertainty: typeof entry.uncertainty === "string" ? entry.uncertainty.trim() : "",
         alternative: typeof entry.alternative === "string" ? entry.alternative.trim() : "",
         nextAction: typeof entry.nextAction === "string" ? entry.nextAction.trim() : "",
         quickOnly: Boolean(entry.quickOnly)
