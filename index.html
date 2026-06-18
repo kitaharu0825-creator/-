@@ -1554,27 +1554,41 @@
       }
       return count === 1 ? 720 : Math.round(((index + 1) / (count + 1)) * 1440);
     }
+    function moodPolarity(entry) {
+      const emotion = String(entry?.emotion || "").trim();
+      if (/うれし|嬉し|楽し|安心|おだやか|穏やか|幸せ|元気|前向き|達成/.test(emotion)) return 1;
+      if (/不安|かなしい|悲し|いらいら|怒|つら|辛|落ち込|怖|寂/.test(emotion)) return -1;
+      const preset = moodPresets.find((mood) => mood.color.toLowerCase() === String(entry?.color || "").toLowerCase());
+      if (["おだやか", "うれしい"].includes(preset?.label)) return 1;
+      if (["不安", "かなしい", "いらいら"].includes(preset?.label)) return -1;
+      return 0;
+    }
+    function polarityLabel(value) {
+      if (value > 0) return "ポジティブ";
+      if (value < 0) return "ネガティブ";
+      return "ふつう";
+    }
     function updateChartSelection(entry) {
       if (!entry) {
         chartSelection.textContent = "点を押すと、その時の記録を確認できます。";
         return;
       }
       const when = [entry.time || "時間未入力", entry.timeContext].filter(Boolean).join(" / ");
-      chartSelection.textContent = `${when}　${entry.emotion || "気分"}　強さ ${Number(entry.intensity) || 0}/100`;
+      chartSelection.textContent = `${when}　${entry.emotion || "気分"}　${polarityLabel(moodPolarity(entry))}`;
     }
     function renderChart() {
       const context = chart.getContext("2d");
       const rect = chart.getBoundingClientRect();
       if (rect.width < 1 || rect.height < 1) return;
       waveDayLabel.textContent = formatWaveDay(visibleWaveDate);
-      chart.setAttribute("aria-label", `${formatWaveDay(visibleWaveDate)}の気分の波`);
+      chart.setAttribute("aria-label", `${formatWaveDay(visibleWaveDate)}のポジティブ・ネガティブの波`);
       const ratio = window.devicePixelRatio || 1;
       chart.width = Math.max(1, Math.floor(rect.width * ratio));
       chart.height = Math.max(1, Math.floor(rect.height * ratio));
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
       const width = rect.width;
       const height = rect.height;
-      const padLeft = 42;
+      const padLeft = 82;
       const padRight = 14;
       const padTop = 20;
       const padBottom = 32;
@@ -1585,16 +1599,16 @@
       context.fillRect(0, 0, width, height);
       context.strokeStyle = "#ead9c8";
       context.fillStyle = "#746b63";
-      context.font = "12px -apple-system, BlinkMacSystemFont, sans-serif";
-      for (let i = 0; i <= 4; i += 1) {
-        const y = padTop + (plotHeight / 4) * i;
+      context.font = "11px -apple-system, BlinkMacSystemFont, sans-serif";
+      ["ポジティブ", "ふつう", "ネガティブ"].forEach((label, index) => {
+        const y = padTop + (plotHeight / 2) * index;
         context.beginPath();
         context.moveTo(padLeft, y);
         context.lineTo(width - padRight, y);
         context.stroke();
         context.textAlign = "right";
-        context.fillText(String(100 - i * 25), padLeft - 8, y + 4);
-      }
+        context.fillText(label, padLeft - 8, y + 4);
+      });
       [0, 6, 12, 18, 24].forEach((hour) => {
         const x = padLeft + (hour / 24) * plotWidth;
         context.beginPath();
@@ -1606,13 +1620,12 @@
       });
       const dayEntries = sortEntries(entries.filter((entry) => entry.date === visibleWaveDate), "asc").slice(-24);
       chartPoints = dayEntries.map((entry, index, list) => {
-        const intensity = Number(entry.intensity);
-        const value = Number.isFinite(intensity) ? Math.min(100, Math.max(0, intensity)) : 45;
+        const polarity = moodPolarity(entry);
         const minutes = entryMinutes(entry, index, list.length);
         return {
           entry,
           x: padLeft + (minutes / 1440) * plotWidth,
-          y: padTop + plotHeight - (value / 100) * plotHeight
+          y: padTop + ((1 - polarity) / 2) * plotHeight
         };
       });
       if (chartPoints.length === 0) {
