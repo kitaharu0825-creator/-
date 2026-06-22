@@ -1270,11 +1270,17 @@
         </div>
         <div class="field">
           <label for="historyDateFrom">開始日</label>
-          <input id="historyDateFrom" type="date">
+          <div class="picker-shell">
+            <span class="picker-value" id="historyDateFromDisplay" aria-hidden="true">開始日を選択</span>
+            <input id="historyDateFrom" type="date">
+          </div>
         </div>
         <div class="field">
           <label for="historyDateTo">終了日</label>
-          <input id="historyDateTo" type="date">
+          <div class="picker-shell">
+            <span class="picker-value" id="historyDateToDisplay" aria-hidden="true">終了日を選択</span>
+            <input id="historyDateTo" type="date">
+          </div>
         </div>
       </div>
       <div class="history-filter-footer">
@@ -1408,6 +1414,8 @@
     const historyMood = document.querySelector("#historyMood");
     const historyDateFrom = document.querySelector("#historyDateFrom");
     const historyDateTo = document.querySelector("#historyDateTo");
+    const historyDateFromDisplay = document.querySelector("#historyDateFromDisplay");
+    const historyDateToDisplay = document.querySelector("#historyDateToDisplay");
     const historyResult = document.querySelector("#historyResult");
     const clearHistoryFilters = document.querySelector("#clearHistoryFilters");
     const sampleButton = document.querySelector("#sampleButton");
@@ -1532,6 +1540,10 @@
       preview.thought.textContent = escapeText(fields.thought.value, "浮かんだ考え");
       preview.action.textContent = escapeText(fields.action.value, "実際にしたこと");
       updateMoodButtons();
+    }
+    function updateHistoryDateDisplays() {
+      historyDateFromDisplay.textContent = historyDateFrom.value ? historyDateFrom.value.replace(/-/g, "/") : "開始日を選択";
+      historyDateToDisplay.textContent = historyDateTo.value ? historyDateTo.value.replace(/-/g, "/") : "終了日を選択";
     }
     function switchTab(tabName) {
       tabButtons.forEach((button) => button.setAttribute("aria-selected", String(button.dataset.tab === tabName)));
@@ -2210,13 +2222,20 @@
     });
     historySearch.addEventListener("input", renderHistory);
     historyMood.addEventListener("change", renderHistory);
-    historyDateFrom.addEventListener("change", renderHistory);
-    historyDateTo.addEventListener("change", renderHistory);
+    historyDateFrom.addEventListener("change", () => {
+      updateHistoryDateDisplays();
+      renderHistory();
+    });
+    historyDateTo.addEventListener("change", () => {
+      updateHistoryDateDisplays();
+      renderHistory();
+    });
     clearHistoryFilters.addEventListener("click", () => {
       historySearch.value = "";
       historyMood.value = "";
       historyDateFrom.value = "";
       historyDateTo.value = "";
+      updateHistoryDateDisplays();
       renderHistory();
       historySearch.focus();
     });
@@ -2238,6 +2257,7 @@
     todayMonthButton.setAttribute("aria-label", `今月 ${today.toLocaleDateString("ja-JP", { year: "numeric", month: "long" })}`);
     buildMoodPalette();
     resetForm();
+    updateHistoryDateDisplays();
     renderAll();
 
     if ("serviceWorker" in navigator && location.protocol !== "file:") {
