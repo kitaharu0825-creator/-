@@ -778,6 +778,10 @@
       padding: 12px;
     }
 
+    .entry-card.is-expanded {
+      border-color: var(--accent);
+    }
+
     .entry-dot {
       width: 34px;
       height: 34px;
@@ -800,6 +804,57 @@
 
     .entry-actions {
       display: flex;
+      gap: 8px;
+    }
+
+    .entry-detail {
+      grid-column: 1 / -1;
+      display: grid;
+      gap: 10px;
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+    }
+
+    .entry-detail h3 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .entry-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .entry-detail-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 10px;
+    }
+
+    .entry-detail-item span {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--accent-dark);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .entry-detail-item p {
+      margin: 0;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .entry-detail-empty {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .entry-detail-actions {
+      display: flex;
+      flex-wrap: wrap;
       gap: 8px;
     }
 
@@ -952,6 +1007,14 @@
       .entry-actions {
         grid-column: 1 / -1;
         justify-content: flex-end;
+      }
+
+      .entry-detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .entry-detail-actions .small-button {
+        flex: 1 1 140px;
       }
 
       .history-filter-footer {
@@ -1363,6 +1426,7 @@
     let entries = readEntries();
     let settings = readSettings();
     let editingId = null;
+    let viewingHistoryId = null;
     let clearArmed = false;
     let clearTimer = null;
     let visibleWaveDate = localDateString();
@@ -1748,6 +1812,60 @@
       averageSummary.textContent = `${average}/100`;
       latestSummary.textContent = latest.emotion || "未入力";
     }
+    function appendHistoryDetail(item, entry) {
+      const detail = document.createElement("section");
+      detail.className = "entry-detail";
+      detail.id = `history-detail-${entry.id}`;
+      detail.setAttribute("aria-label", `${formatDate(entry.date)}の記録内容`);
+      const heading = document.createElement("h3");
+      heading.textContent = "記録の内容";
+      detail.appendChild(heading);
+      const detailFields = [
+        ["その時の状況", entry.situation],
+        ["からだの状況", entry.body],
+        ["浮かんだ考え", entry.thought],
+        ["とった行動", entry.action],
+        ["本当にそうだと分かっている事実", entry.evidence],
+        ["まだそうと決まったわけではない部分", entry.uncertainty],
+        ["別の見方", entry.alternative],
+        ["次の小さな行動", entry.nextAction]
+      ].filter(([, value]) => String(value || "").trim());
+      if (detailFields.length > 0) {
+        const grid = document.createElement("div");
+        grid.className = "entry-detail-grid";
+        detailFields.forEach(([label, value]) => {
+          const field = document.createElement("div");
+          field.className = "entry-detail-item";
+          const name = document.createElement("span");
+          name.textContent = label;
+          const content = document.createElement("p");
+          content.textContent = value;
+          field.append(name, content);
+          grid.appendChild(field);
+        });
+        detail.appendChild(grid);
+      } else {
+        const empty = document.createElement("p");
+        empty.className = "entry-detail-empty";
+        empty.textContent = "この記録は色と気分を中心に残されています。";
+        detail.appendChild(empty);
+      }
+      const detailActions = document.createElement("div");
+      detailActions.className = "entry-detail-actions";
+      const edit = document.createElement("button");
+      edit.className = "small-button";
+      edit.type = "button";
+      edit.dataset.load = entry.id;
+      edit.textContent = "編集する";
+      const close = document.createElement("button");
+      close.className = "small-button";
+      close.type = "button";
+      close.dataset.closeView = entry.id;
+      close.textContent = "詳細を閉じる";
+      detailActions.append(edit, close);
+      detail.appendChild(detailActions);
+      item.appendChild(detail);
+    }
     function renderHistory() {
       historyList.innerHTML = "";
       const selectedMood = historyMood.value;
@@ -1807,6 +1925,8 @@
       filteredEntries.forEach((entry) => {
         const item = document.createElement("article");
         item.className = "entry-card";
+        const isExpanded = viewingHistoryId === entry.id;
+        if (isExpanded) item.classList.add("is-expanded");
         const dot = document.createElement("span");
         dot.className = "entry-dot";
         dot.style.background = entry.color || "#9fb7bd";
@@ -1824,8 +1944,10 @@
         const open = document.createElement("button");
         open.className = "small-button";
         open.type = "button";
-        open.dataset.load = entry.id;
-        open.textContent = "開く";
+        open.dataset.view = entry.id;
+        open.setAttribute("aria-expanded", String(isExpanded));
+        open.setAttribute("aria-controls", `history-detail-${entry.id}`);
+        open.textContent = isExpanded ? "閉じる" : "内容を見る";
         const remove = document.createElement("button");
         remove.className = "small-button";
         remove.type = "button";
@@ -1833,6 +1955,7 @@
         remove.textContent = "削除";
         actions.append(open, remove);
         item.append(dot, text, actions);
+        if (isExpanded) appendHistoryDetail(item, entry);
         historyList.appendChild(item);
       });
     }
@@ -2055,14 +2178,31 @@
       switchTab("record");
     });
     historyList.addEventListener("click", (event) => {
+      const viewButton = event.target.closest("[data-view]");
+      const closeViewButton = event.target.closest("[data-close-view]");
       const loadButton = event.target.closest("[data-load]");
       const deleteButton = event.target.closest("[data-delete]");
+      if (viewButton) {
+        viewingHistoryId = viewingHistoryId === viewButton.dataset.view ? null : viewButton.dataset.view;
+        renderHistory();
+        return;
+      }
+      if (closeViewButton) {
+        viewingHistoryId = null;
+        renderHistory();
+        return;
+      }
       if (loadButton) {
         const entry = entries.find((item) => item.id === loadButton.dataset.load);
-        if (entry) fillForm(entry);
+        if (entry) {
+          viewingHistoryId = null;
+          fillForm(entry);
+        }
+        return;
       }
       if (deleteButton) {
         entries = entries.filter((item) => item.id !== deleteButton.dataset.delete);
+        if (viewingHistoryId === deleteButton.dataset.delete) viewingHistoryId = null;
         if (editingId === deleteButton.dataset.delete) resetForm();
         writeEntries();
         renderAll();
