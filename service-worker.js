@@ -1,4 +1,4 @@
-const CACHE_NAME = "cbt-journal-v22";
+const CACHE_NAME = "cbt-journal-v23";
 const APP_FILES = [
   "./",
   "./index.html",
@@ -8,7 +8,11 @@ const APP_FILES = [
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_FILES)));
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => (
+      cache.addAll(APP_FILES.map((file) => new Request(file, { cache: "reload" })))
+    ))
+  );
   self.skipWaiting();
 });
 
@@ -25,7 +29,7 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   if (event.request.mode === "navigate" || event.request.destination === "document") {
     event.respondWith(
-      fetch(event.request).then((response) => {
+      fetch(new Request(event.request, { cache: "reload" })).then((response) => {
         const copy = response.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
         return response;
