@@ -1,12 +1,12 @@
 {
-  "name": "CBTジャーナル",
-  "short_name": "CBT Journal",
-  "description": "気分色だけでも残せる認知行動療法ジャーナル",
+  "name": "こころスナップ",
+  "short_name": "こころスナップ",
+  "description": "こころの天気を1分で残せる気分ジャーナル",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#fbf6ec",
-  "theme_color": "#fbf6ec",
+  "background_color": "#f6efe4",
+  "theme_color": "#f6efe4",
   "orientation": "portrait",
   "icons": [
     {
