@@ -1862,7 +1862,7 @@
       setVisibleMonth(entry.date);
       visibleWaveDate = entry.date;
       const savedTime = [entry.time, entry.timeContext].filter(Boolean).join(" / ");
-      const savedMessage = `${formatDate(entry.date)}${savedTime ? ` ${savedTime}` : ""} に「${entry.emotion}」を記録しました。${randomPraise()}`;
+      const savedMessage = `${formatDate(entry.date)}${savedTime ? ` ${savedTime}` : ""} に「${entry.emotion}」をスナップしました。${randomPraise()}`;
       resetForm();
       renderAll();
       feedback.textContent = savedMessage;
@@ -1875,7 +1875,7 @@
       fields.emotion.value = "ふつう";
       fields.moodColor.value = "#9fb7bd";
       fields.intensity.value = "45";
-      saveButton.textContent = "記録する";
+      saveButton.textContent = "スナップを残す";
       monthSelection.textContent = "記録がある日を押すと、その日の最新記録を開けます。";
       updatePreview();
     }
@@ -1885,7 +1885,7 @@
         if (key === "moodColor") element.value = entry.color || "#9fb7bd";
         else element.value = entry[key] ?? "";
       });
-      saveButton.textContent = "上書きする";
+      saveButton.textContent = "スナップを更新";
       setVisibleMonth(entry.date || localDateString());
       visibleWaveDate = entry.date || localDateString();
       feedback.textContent = `${formatDate(entry.date)}の記録を開いています。`;
