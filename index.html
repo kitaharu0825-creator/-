@@ -258,18 +258,6 @@
       font-size: 0.9rem;
     }
 
-    .score-badge {
-      min-width: 76px;
-      border-radius: 999px;
-      border: 1px solid rgba(143, 174, 181, 0.24);
-      padding: 7px 12px;
-      background: rgba(255, 253, 248, 0.82);
-      color: var(--accent-ink);
-      text-align: center;
-      font-weight: 800;
-      box-shadow: var(--inner-light);
-    }
-
     .mood-palette {
       display: grid;
       grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -307,15 +295,6 @@
       border-radius: 999px;
     }
 
-    .record-controls {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .slider-row,
     .custom-row {
       display: grid;
       gap: 6px;
@@ -326,54 +305,17 @@
       align-items: center;
     }
 
+    .mood-color-row {
+      width: fit-content;
+      max-width: 100%;
+      margin-bottom: 12px;
+    }
+
     label,
     .field-label {
       color: var(--accent-dark);
       font-size: 0.88rem;
       font-weight: 800;
-    }
-
-    input[type="range"] {
-      appearance: none;
-      -webkit-appearance: none;
-      width: 100%;
-      height: 44px;
-      margin: 0;
-      background: transparent;
-      cursor: pointer;
-      touch-action: pan-y;
-    }
-
-    input[type="range"]::-webkit-slider-runnable-track {
-      height: 8px;
-      border-radius: 999px;
-      background: var(--line);
-    }
-
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 34px;
-      height: 34px;
-      margin-top: -13px;
-      border: 3px solid #fffdf8;
-      border-radius: 999px;
-      background: var(--accent);
-      box-shadow: 0 2px 7px rgba(47, 42, 39, 0.26);
-    }
-
-    input[type="range"]::-moz-range-track {
-      height: 8px;
-      border-radius: 999px;
-      background: var(--line);
-    }
-
-    input[type="range"]::-moz-range-thumb {
-      width: 30px;
-      height: 30px;
-      border: 3px solid #fffdf8;
-      border-radius: 999px;
-      background: var(--accent);
-      box-shadow: 0 2px 7px rgba(47, 42, 39, 0.26);
     }
 
     input[type="color"] {
@@ -574,6 +516,69 @@
       margin: 10px 0 0;
       color: var(--muted);
       font-size: 0.84rem;
+    }
+
+    body.is-welcome-open {
+      overflow: hidden;
+    }
+
+    .welcome-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background:
+        radial-gradient(circle at 28% 18%, rgba(217, 91, 43, 0.16), transparent 30%),
+        radial-gradient(circle at 76% 30%, rgba(143, 174, 181, 0.2), transparent 32%),
+        rgba(246, 239, 228, 0.72);
+      backdrop-filter: blur(14px);
+    }
+
+    .welcome-card {
+      width: min(420px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      background: linear-gradient(180deg, rgba(255, 253, 248, 0.96), rgba(255, 248, 238, 0.94));
+      box-shadow: 0 28px 80px rgba(66, 45, 29, 0.2), var(--inner-light);
+      padding: 24px;
+      text-align: center;
+      animation: panel-in 220ms ease both;
+    }
+
+    .welcome-mark {
+      display: grid;
+      place-items: center;
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 14px;
+      border: 1px solid rgba(143, 174, 181, 0.26);
+      border-radius: 20px;
+      background: rgba(143, 174, 181, 0.16);
+      font-size: 1.6rem;
+      box-shadow: var(--inner-light);
+    }
+
+    .welcome-card h2 {
+      margin-bottom: 8px;
+      font-size: 1.35rem;
+    }
+
+    .welcome-card p {
+      margin: 0;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .welcome-sub {
+      margin-top: 6px !important;
+      font-size: 0.92rem;
+    }
+
+    .welcome-card .button {
+      width: 100%;
+      margin-top: 18px;
     }
 
     .dashboard {
@@ -821,7 +826,7 @@
 
     .summary-row {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
       margin-top: 12px;
     }
@@ -1098,7 +1103,6 @@
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
 
-      .record-controls,
       .primary-row,
       .detail-grid,
       .history-filters,
@@ -1183,6 +1187,16 @@
   </style>
 </head>
 <body>
+  <div class="welcome-screen" id="welcomeScreen" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle" hidden>
+    <div class="welcome-card">
+      <div class="welcome-mark" aria-hidden="true">☁️</div>
+      <h2 id="welcomeTitle">ようこそ</h2>
+      <p>ここは、今日の気分を色でそっと残す場所です。</p>
+      <p class="welcome-sub">言葉にならない日は、色だけでも大丈夫。</p>
+      <button class="button primary" type="button" id="welcomeStartButton">はじめる</button>
+    </div>
+  </div>
+
   <div class="app">
     <header class="topbar">
       <div>
@@ -1206,22 +1220,15 @@
             <h2 id="recordTitle">今日の記録</h2>
             <p>色だけでも保存できます。余裕がある日は下の欄も少しだけ。</p>
           </div>
-          <span class="score-badge"><span id="intensityValue">45</span>/100</span>
         </div>
 
         <form id="journalForm">
           <div class="mood-palette" id="moodPalette" aria-label="気分色を選ぶ"></div>
 
-          <div class="record-controls">
-            <div class="slider-row">
-              <label for="intensity">気分の強さ</label>
-              <input id="intensity" name="intensity" type="range" min="0" max="100" value="45">
-            </div>
-            <label class="custom-row" for="moodColor">
-              <input id="moodColor" name="moodColor" type="color" value="#9fb7bd" aria-label="気分色">
-              <span>色を自由に選択</span>
-            </label>
-          </div>
+          <label class="custom-row mood-color-row" for="moodColor">
+            <input id="moodColor" name="moodColor" type="color" value="#9fb7bd" aria-label="気分色">
+            <span>色を自由に選択</span>
+          </label>
 
           <div class="primary-row">
             <div class="field">
@@ -1355,10 +1362,6 @@
             <strong id="countSummary">0件</strong>
           </div>
           <div class="summary-item">
-            <span>平均の強さ</span>
-            <strong id="averageSummary">-</strong>
-          </div>
-          <div class="summary-item">
             <span>最新の気分</span>
             <strong id="latestSummary">-</strong>
           </div>
@@ -1434,14 +1437,15 @@
 
   <script>
     const STORAGE_KEY = "cbt-journal-v4";
+    const WELCOME_KEY = "cbt-journal-welcome-v1";
     const LEGACY_STORAGE_KEYS = ["cbt-journal-v3", "cbt-journal-v1"];
     const moodPresets = [
-      { label: "おだやか", color: "#82a878", value: 25 },
-      { label: "うれしい", color: "#f0c95a", value: 35 },
-      { label: "ふつう", color: "#9fb7bd", value: 45 },
-      { label: "不安", color: "#d95b2b", value: 70 },
-      { label: "かなしい", color: "#6f8fb8", value: 75 },
-      { label: "いらいら", color: "#c94b4b", value: 80 }
+      { label: "おだやか", color: "#82a878" },
+      { label: "うれしい", color: "#f0c95a" },
+      { label: "ふつう", color: "#9fb7bd" },
+      { label: "不安", color: "#d95b2b" },
+      { label: "かなしい", color: "#6f8fb8" },
+      { label: "いらいら", color: "#c94b4b" }
     ];
     const praiseMessages = [
       "記録できた、それだけで十分えらいです。",
@@ -1451,9 +1455,9 @@
       "短くても記録は記録。続ける力になっています。"
     ];
     const sampleEntries = [
-      { dateOffset: -5, time: "20:40", timeContext: "仕事のあと", emotion: "不安", color: "#d95b2b", intensity: 72, situation: "明日の予定を考えて落ち着かなかった", body: "胸が重い\n肩に力", thought: "間に合わないかも", action: "予定表を見直した" },
-      { dateOffset: -3, time: "22:10", timeContext: "寝る前", emotion: "安心", color: "#82a878", intensity: 34, situation: "予定をひとつ終えた", body: "呼吸が楽", thought: "思ったよりできた", action: "早めに寝る準備" },
-      { dateOffset: -1, time: "12:30", timeContext: "昼", emotion: "うれしい", color: "#f0c95a", intensity: 42, situation: "音楽を聴きながら片づけた", body: "体が軽い", thought: "少し整った", action: "机の上を片づけた" }
+      { dateOffset: -5, time: "20:40", timeContext: "仕事のあと", emotion: "不安", color: "#d95b2b", situation: "明日の予定を考えて落ち着かなかった", body: "胸が重い\n肩に力", thought: "間に合わないかも", action: "予定表を見直した" },
+      { dateOffset: -3, time: "22:10", timeContext: "寝る前", emotion: "安心", color: "#82a878", situation: "予定をひとつ終えた", body: "呼吸が楽", thought: "思ったよりできた", action: "早めに寝る準備" },
+      { dateOffset: -1, time: "12:30", timeContext: "昼", emotion: "うれしい", color: "#f0c95a", situation: "音楽を聴きながら片づけた", body: "体が軽い", thought: "少し整った", action: "机の上を片づけた" }
     ];
 
     const fields = {
@@ -1462,7 +1466,6 @@
       timeContext: document.querySelector("#timeContext"),
       emotion: document.querySelector("#emotion"),
       moodColor: document.querySelector("#moodColor"),
-      intensity: document.querySelector("#intensity"),
       situation: document.querySelector("#situation"),
       body: document.querySelector("#body"),
       thought: document.querySelector("#thought"),
@@ -1474,7 +1477,6 @@
     };
     const form = document.querySelector("#journalForm");
     const moodPalette = document.querySelector("#moodPalette");
-    const intensityValue = document.querySelector("#intensityValue");
     const dateDisplay = document.querySelector("#dateDisplay");
     const timeDisplay = document.querySelector("#timeDisplay");
     const feedback = document.querySelector("#feedback");
@@ -1496,7 +1498,6 @@
     const todayMonthButton = document.querySelector("#todayMonthButton");
     const nextMonthButton = document.querySelector("#nextMonthButton");
     const countSummary = document.querySelector("#countSummary");
-    const averageSummary = document.querySelector("#averageSummary");
     const latestSummary = document.querySelector("#latestSummary");
     const historyList = document.querySelector("#historyList");
     const historySearch = document.querySelector("#historySearch");
@@ -1515,6 +1516,8 @@
     const importButton = document.querySelector("#importButton");
     const importFileInput = document.querySelector("#importFileInput");
     const dataFeedback = document.querySelector("#dataFeedback");
+    const welcomeScreen = document.querySelector("#welcomeScreen");
+    const welcomeStartButton = document.querySelector("#welcomeStartButton");
 
     let entries = readEntries();
     let editingId = null;
@@ -1606,7 +1609,6 @@
         button.className = "mood-chip";
         button.dataset.color = mood.color;
         button.dataset.label = mood.label;
-        button.dataset.value = mood.value;
         const dot = document.createElement("span");
         dot.className = "mood-dot";
         dot.style.background = mood.color;
@@ -1619,14 +1621,12 @@
     function chooseMood(button) {
       fields.moodColor.value = button.dataset.color;
       fields.emotion.value = button.dataset.label;
-      fields.intensity.value = button.dataset.value;
       feedback.textContent = "";
       updatePreview();
     }
     function updateMoodButtons() {
       const color = fields.moodColor.value.toLowerCase();
       moodPalette.querySelectorAll(".mood-chip").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.color.toLowerCase() === color)));
-      intensityValue.textContent = fields.intensity.value;
     }
     function updatePreview() {
       const color = fields.moodColor.value;
@@ -1639,6 +1639,27 @@
       historyDateFromDisplay.textContent = historyDateFrom.value ? historyDateFrom.value.replace(/-/g, "/") : "開始日を選択";
       historyDateToDisplay.textContent = historyDateTo.value ? historyDateTo.value.replace(/-/g, "/") : "終了日を選択";
     }
+    function showWelcomeIfNeeded() {
+      let hasSeenWelcome = false;
+      try {
+        hasSeenWelcome = localStorage.getItem(WELCOME_KEY) === "seen";
+      } catch {
+        hasSeenWelcome = false;
+      }
+      if (hasSeenWelcome) return;
+      welcomeScreen.hidden = false;
+      document.body.classList.add("is-welcome-open");
+      window.requestAnimationFrame(() => welcomeStartButton.focus());
+    }
+    function closeWelcome() {
+      welcomeScreen.hidden = true;
+      document.body.classList.remove("is-welcome-open");
+      try {
+        localStorage.setItem(WELCOME_KEY, "seen");
+      } catch {
+        // 保存できない環境では、その場で閉じるだけにします。
+      }
+    }
     function switchTab(tabName) {
       tabButtons.forEach((button) => button.setAttribute("aria-selected", String(button.dataset.tab === tabName)));
       tabPanels.forEach((panel) => { panel.hidden = panel.dataset.tabPanel !== tabName; });
@@ -1648,7 +1669,6 @@
 
     function collectEntry(quickOnly = false) {
       const existing = editingId ? entries.find((entry) => entry.id === editingId) : null;
-      const intensity = Number(fields.intensity.value);
       return {
         id: editingId || crypto.randomUUID(),
         createdAt: existing?.createdAt || new Date().toISOString(),
@@ -1658,7 +1678,6 @@
         timeContext: fields.timeContext.value.trim(),
         emotion: fields.emotion.value.trim() || "色だけ",
         color: fields.moodColor.value,
-        intensity: Number.isFinite(intensity) ? intensity : 45,
         situation: quickOnly ? "" : fields.situation.value.trim(),
         body: quickOnly ? "" : fields.body.value.trim(),
         thought: quickOnly ? "" : fields.thought.value.trim(),
@@ -1701,7 +1720,6 @@
       fields.time.value = localTimeString();
       fields.emotion.value = "ふつう";
       fields.moodColor.value = "#9fb7bd";
-      fields.intensity.value = "45";
       saveButton.textContent = "記録する";
       monthSelection.textContent = "記録がある日を押すと、その日の最新記録を開けます。";
       updatePreview();
@@ -1911,13 +1929,10 @@
     function renderSummary() {
       countSummary.textContent = `${entries.length}件`;
       if (entries.length === 0) {
-        averageSummary.textContent = "-";
         latestSummary.textContent = "-";
         return;
       }
-      const average = Math.round(entries.reduce((sum, entry) => sum + (Number(entry.intensity) || 0), 0) / entries.length);
       const latest = sortEntries(entries, "desc")[0];
-      averageSummary.textContent = `${average}/100`;
       latestSummary.textContent = latest.emotion || "未入力";
     }
     function appendHistoryDetail(item, entry) {
@@ -2045,7 +2060,8 @@
         const meta = document.createElement("p");
         meta.className = "entry-meta";
         const timeDetail = [entry.time, entry.timeContext].filter(Boolean).join(" / ");
-        meta.textContent = `${entry.intensity ?? 0}/100${timeDetail ? ` / ${timeDetail}` : ""} / ${entry.quickOnly ? "色だけ記録" : entry.situation || "状況なし"}`;
+        const summaryText = entry.quickOnly ? "色だけ記録" : entry.situation || "状況なし";
+        meta.textContent = [timeDetail, summaryText].filter(Boolean).join(" / ");
         text.append(title, meta);
         const actions = document.createElement("div");
         actions.className = "entry-actions";
@@ -2079,7 +2095,7 @@
       const samples = sampleEntries.map((sample) => {
         const date = new Date(today);
         date.setDate(today.getDate() + sample.dateOffset);
-        return { id: crypto.randomUUID(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), date: localDateString(date), time: sample.time, timeContext: sample.timeContext, emotion: sample.emotion, color: sample.color, intensity: sample.intensity, situation: sample.situation, body: sample.body, thought: sample.thought, action: sample.action, evidence: "", uncertainty: "", alternative: "", nextAction: "", quickOnly: false };
+        return { id: crypto.randomUUID(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), date: localDateString(date), time: sample.time, timeContext: sample.timeContext, emotion: sample.emotion, color: sample.color, situation: sample.situation, body: sample.body, thought: sample.thought, action: sample.action, evidence: "", uncertainty: "", alternative: "", nextAction: "", quickOnly: false };
       });
       entries = [...entries, ...samples];
       writeEntries();
@@ -2108,7 +2124,6 @@
     function normalizeImportedEntry(entry) {
       if (!entry || typeof entry !== "object") return null;
       if (typeof entry.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) return null;
-      const intensity = Number(entry.intensity);
       const color = typeof entry.color === "string" && /^#[0-9a-f]{6}$/i.test(entry.color) ? entry.color : "#9fb7bd";
       return {
         id: typeof entry.id === "string" && entry.id ? entry.id : crypto.randomUUID(),
@@ -2119,7 +2134,6 @@
         timeContext: typeof entry.timeContext === "string" ? entry.timeContext.trim() : "",
         emotion: typeof entry.emotion === "string" ? entry.emotion.trim() : "色だけ",
         color,
-        intensity: Number.isFinite(intensity) ? Math.min(100, Math.max(0, intensity)) : 45,
         situation: typeof entry.situation === "string" ? entry.situation.trim() : "",
         body: typeof entry.body === "string" ? entry.body.trim() : "",
         thought: typeof entry.thought === "string" ? entry.thought.trim() : "",
@@ -2272,6 +2286,7 @@
     settingsExportButton.addEventListener("click", downloadJson);
     importButton.addEventListener("click", () => importFileInput.click());
     importFileInput.addEventListener("change", importBackupFile);
+    welcomeStartButton.addEventListener("click", closeWelcome);
     window.addEventListener("resize", renderChart);
 
     const today = new Date();
@@ -2280,6 +2295,7 @@
     resetForm();
     updateHistoryDateDisplays();
     renderAll();
+    showWelcomeIfNeeded();
 
     if ("serviceWorker" in navigator && location.protocol !== "file:") {
       navigator.serviceWorker.register("./service-worker.js").catch(() => {});
